@@ -1,0 +1,16 @@
+package com.app.findgwangmyeongserver.repo;
+
+import com.app.findgwangmyeongserver.entity.TradeEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
+
+    public List<TradeEntity> findByYearAndMonth(String year, String month);
+
+    public long countByYearAndMonth(String year, String month);
+
+}

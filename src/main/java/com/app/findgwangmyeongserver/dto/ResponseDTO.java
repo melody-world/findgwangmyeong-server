@@ -1,26 +1,15 @@
 package com.app.findgwangmyeongserver.dto;
 
+import lombok.Builder;
 import lombok.Data;
+import org.jdom2.Element;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import java.util.List;
-
-@XmlRootElement(name = "response")
+@Data
+@Builder
 public class ResponseDTO {
 
-    private List<ItemDTO> itemInfo;
-
-    @XmlElementWrapper(name="items")
-    @XmlElement(name="item")
-    public List<ItemDTO> getItemInfo() {
-        return itemInfo;
-    }
-
-    public void setItemInfo(List<ItemDTO> memberInfo) {
-        this.itemInfo = itemInfo;
-    }
-
+    private String message;
+    private Element header;
+    private Element body;
 
 }
