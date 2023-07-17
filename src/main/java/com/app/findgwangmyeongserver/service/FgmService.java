@@ -133,15 +133,15 @@ public class FgmService {
 
             if (numOfRows > 0) {
                 if (currentCount == 0) {   //등록된 거래내역이 없는 경우
-                    saveData(1, numOfRows, deelYmd);
+                    saveTrade(1, numOfRows, deelYmd);
                 } else {
-                    saveData(2, numOfRows, deelYmd);
+                    saveTrade(2, numOfRows, deelYmd);
                 }
             }
         }
     }
 
-    public void saveData(
+    public void saveTrade(
             int pageNo,
             int numOfRows,
             String dealYmd
