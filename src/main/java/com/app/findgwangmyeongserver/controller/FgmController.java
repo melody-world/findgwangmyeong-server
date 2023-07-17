@@ -9,10 +9,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,12 +34,12 @@ public class FgmController {
         }
     }
 
-    @PostMapping(value="/trade/confirm")
-    public ResponseEntity<MsgEntity> confirmTrade(
-            @RequestParam("year") String year,
-            @RequestParam("month") String month
+    @GetMapping(value="/trade/latest/{year}/{month}")
+    public ResponseEntity<MsgEntity> saveLatestTradeData(
+            @PathVariable("year") String year,
+            @PathVariable("month") String month
     ) throws Exception {
-        fgmService.confirmTrade(year, month);
+        fgmService.saveLatestTradeData(year, month);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));

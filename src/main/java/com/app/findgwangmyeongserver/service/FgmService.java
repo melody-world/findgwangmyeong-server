@@ -111,7 +111,7 @@ public class FgmService {
         return obj.toString();
     }
 
-    public void confirmTrade(
+    public void saveLatestTradeData(
             String year,
             String month
     ) throws Exception {
