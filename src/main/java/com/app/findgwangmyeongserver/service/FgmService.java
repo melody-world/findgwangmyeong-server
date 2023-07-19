@@ -89,6 +89,7 @@ public class FgmService {
         for (TradeEntity tradeInfo : tradeList) {
             JSONObject tradeObj = new JSONObject();
 
+            tradeObj.put("tradeSeq"   , tradeInfo.getTradeSeq());
             tradeObj.put("year"       , tradeInfo.getYear());
             tradeObj.put("month"      , tradeInfo.getMonth());
             tradeObj.put("day"        , tradeInfo.getDay());
