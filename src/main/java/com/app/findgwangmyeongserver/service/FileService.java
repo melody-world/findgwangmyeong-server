@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Service
@@ -29,6 +31,8 @@ public class FileService {
             return ResponseEntity.ok().body(null);
 
         String uploadFile = UPLOAD_FILE_DIR + "/" + fileName;
+
+        checkDirectory();
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(uploadFile, false))) {
             writer.write(fileInfo);
@@ -50,6 +54,18 @@ public class FileService {
         }
 
         return ResponseEntity.ok().body(null);
+    }
+
+    private void checkDirectory() {
+        Path path = Paths.get(UPLOAD_FILE_DIR);
+
+        try {
+            if (!Files.exists(path)) {
+                Files.createDirectories(path);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
