@@ -3,6 +3,7 @@ package com.app.findgwangmyeongserver.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -14,11 +15,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FileService {
+
+    final static String UPLOAD_FILE_DIR = System.getProperty("user.home") + "/fgm";
 
     public ResponseEntity<Resource> getDataFile(
             String fileName,
@@ -27,33 +32,28 @@ public class FileService {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
 
-        //파일 경로 설정
-        String uploadFile = "src/main/resources/files/" + fileName;
-        HttpHeaders headers = new HttpHeaders();
-        File file = null;
-        InputStreamResource resource = null;
+        String uploadFile = UPLOAD_FILE_DIR + "/" + fileName;
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(uploadFile, false))) {
             writer.write(fileInfo);
 
-            ClassPathResource classPathResource = new ClassPathResource("files/" + fileName);
-            file = classPathResource.getFile();
+            Path filePath = Path.of(UPLOAD_FILE_DIR, fileName);
 
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-            headers.add("Pragma", "no-cache");
-            headers.add("Expires", "0");
+            if (Files.exists(filePath)) {
+                Resource fileResource = new FileSystemResource(filePath.toFile());
 
-            resource = new InputStreamResource(new FileInputStream(file));
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(fileResource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(file.length())
-                .contentType(MediaType.parseMediaType("application/octet-stream"))
-                .body(resource);
+        return ResponseEntity.ok().body(null);
     }
 
 }
