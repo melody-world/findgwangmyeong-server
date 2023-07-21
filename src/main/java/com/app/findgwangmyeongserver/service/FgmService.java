@@ -101,6 +101,7 @@ public class FgmService {
             tradeObj.put("lawdCd"     , tradeInfo.getLawdCd());
             tradeObj.put("apartDong"  , tradeInfo.getApartDong());
             tradeObj.put("apartStreet", tradeInfo.getApartStreet());
+            tradeObj.put("address"    , tradeInfo.getAddress());
 
             array.add(tradeObj);
         }
@@ -192,6 +193,9 @@ public class FgmService {
                             break;
                         case "도로명":
                             tradeDTO.setApartStreet(info.getContent(0).getValue().trim());
+                            break;
+                        case "지번":
+                            tradeDTO.setAddress(info.getContent(0).getValue().trim());
                             break;
                     }
                 }

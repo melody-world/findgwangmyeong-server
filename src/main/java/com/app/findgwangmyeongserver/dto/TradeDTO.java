@@ -16,5 +16,6 @@ public class TradeDTO {
     private String lawdCd;
     private String apartDong;
     private String apartStreet;
+    private String address;
 
 }
