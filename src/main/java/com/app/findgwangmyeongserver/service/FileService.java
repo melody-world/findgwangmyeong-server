@@ -24,20 +24,21 @@ public class FileService {
     final static String UPLOAD_FILE_DIR = System.getProperty("user.home") + "/fgm";
 
     public ResponseEntity<Resource> getDataFile(
+            String type,
             String fileName,
             String fileInfo
     ) {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
+        String uploadPath = UPLOAD_FILE_DIR + "/" + type;
+        String uploadFile = uploadPath + "/" + fileName;
 
-        String uploadFile = UPLOAD_FILE_DIR + "/" + fileName;
-
-        checkDirectory();
+        checkDirectory(uploadPath);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(uploadFile, false))) {
             writer.write(fileInfo);
 
-            Path filePath = Path.of(UPLOAD_FILE_DIR, fileName);
+            Path filePath = Path.of(uploadPath, fileName);
 
             if (Files.exists(filePath)) {
                 Resource fileResource = new FileSystemResource(filePath.toFile());
@@ -56,8 +57,8 @@ public class FileService {
         return ResponseEntity.ok().body(null);
     }
 
-    private void checkDirectory() {
-        Path path = Paths.get(UPLOAD_FILE_DIR);
+    private void checkDirectory(String filePath) {
+        Path path = Paths.get(filePath);
 
         try {
             if (!Files.exists(path)) {
