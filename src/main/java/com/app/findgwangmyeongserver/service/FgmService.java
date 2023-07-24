@@ -29,6 +29,9 @@ public class FgmService {
     @Value("${openapi.url}")
     private String API_URL;
 
+    @Value("${openapi.rent.url}")
+    private String API_RENT_URL;
+
     @Value("${openapi.service.key}")
     private String SERVICE_KEY;
 
