@@ -24,13 +24,14 @@ public class FileService {
     final static String UPLOAD_FILE_DIR = System.getProperty("user.home") + "/fgm";
 
     public ResponseEntity<Resource> getDataFile(
+            String lawdCd,
             String type,
             String fileName,
             String fileInfo
     ) {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
-        String uploadPath = UPLOAD_FILE_DIR + "/" + type;
+        String uploadPath = UPLOAD_FILE_DIR + "/" + lawdCd + "/" + type;
         String uploadFile = uploadPath + "/" + fileName;
 
         checkDirectory(uploadPath);

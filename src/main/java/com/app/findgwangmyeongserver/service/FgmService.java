@@ -37,13 +37,12 @@ public class FgmService {
     @Value("${openapi.service.key}")
     private String SERVICE_KEY;
 
-    private final static String LAWD_CD = "41210"; //광명지역코드
-
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
 
     private ResponseDTO callOpenApi(
             String type,
+            String lawdCd,
             int pageNo,
             int numOfRows,
             String dealYmd
@@ -51,7 +50,7 @@ public class FgmService {
         StringBuilder sb = new StringBuilder();
         sb.append("deal".equals(type) ? API_URL : API_RENT_URL);
         sb.append("?serviceKey=" + SERVICE_KEY);
-        sb.append("&LAWD_CD=" + LAWD_CD);
+        sb.append("&LAWD_CD=" + lawdCd);
         sb.append("&DEAL_YMD=" + dealYmd);
 
         if ("deal".equals(type)) {
@@ -85,19 +84,21 @@ public class FgmService {
     }
 
     public String getTradeInfo(
+            String lawdCd,
             String type,
             String year,
             String month
     ) {
-        return "deal".equals(type) ? getTradeListToString(year, month)
-                                    : getTradeRentListToString(year, month);
+        return "deal".equals(type) ? getTradeListToString(lawdCd, year, month)
+                                    : getTradeRentListToString(lawdCd, year, month);
     }
 
     private String getTradeListToString(
+            String lawdCd,
             String year,
             String month
     ) {
-        List<TradeEntity> tradeList = tradeRepository.findByYearAndMonth(year, month);
+        List<TradeEntity> tradeList = tradeRepository.findByLawdCdAndYearAndMonth(lawdCd, year, month);
 
         if (CollectionUtils.isEmpty(tradeList)) return "";
 
@@ -132,10 +133,11 @@ public class FgmService {
     }
 
     private String getTradeRentListToString(
+            String lawdCd,
             String year,
             String month
     ) {
-        List<TradeRentEntity> tradeRentList = tradeRentRepository.findByYearAndMonth(year, month);
+        List<TradeRentEntity> tradeRentList = tradeRentRepository.findByLawdCdAndYearAndMonth(lawdCd, year, month);
 
         if (CollectionUtils.isEmpty(tradeRentList)) return "";
 
@@ -173,13 +175,14 @@ public class FgmService {
     }
 
     public void saveLatestTradeData(
+            String lawdCd,
             String type,
             String year,
             String month
     ) throws Exception {
         String deelYmd = year + month;
 
-        ResponseDTO response = callOpenApi(type, 0, 0, deelYmd);
+        ResponseDTO response = callOpenApi(type, lawdCd,0, 0, deelYmd);
 
         if ("OK".equals(response.getMessage())) {
             Element body = response.getBody();
@@ -188,17 +191,17 @@ public class FgmService {
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
             //현재까지 기록된 거래내역 수
-            long count = "deal".equals(type) ? tradeRepository.countByYearAndMonth(year, month) :
-                                                tradeRentRepository.countByYearAndMonth(year, month);
+            long count = "deal".equals(type) ? tradeRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month) :
+                                                tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
             int currentCount = Optional.of(count).orElse(0L).intValue();
 
             int numOfRows = totalCount - currentCount;
 
             if (numOfRows > 0) {
                 if (currentCount == 0) {   //등록된 거래내역이 없는 경우
-                    saveTrade(type, 1, numOfRows, deelYmd);
+                    saveTrade(type, lawdCd, 1, numOfRows, deelYmd);
                 } else {
-                    saveTrade(type, 2, numOfRows, deelYmd);
+                    saveTrade(type, lawdCd, 2, numOfRows, deelYmd);
                 }
             }
         }
@@ -206,11 +209,12 @@ public class FgmService {
 
     public void saveTrade(
             String type,
+            String lawdCd,
             int pageNo,
             int numOfRows,
             String dealYmd
     ) throws Exception {
-        ResponseDTO response = callOpenApi(type, pageNo, numOfRows, dealYmd);
+        ResponseDTO response = callOpenApi(type, lawdCd, pageNo, numOfRows, dealYmd);
 
         if ("OK".equals(response.getMessage())) {
             Element body = response.getBody();

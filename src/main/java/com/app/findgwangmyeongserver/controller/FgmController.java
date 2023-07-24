@@ -19,22 +19,24 @@ public class FgmController {
     @GetMapping(value="{type}/file")
     public ResponseEntity<Resource> getFileTradeData(
             @PathVariable("type") String type,
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
             @RequestParam("year") String year,
             @RequestParam("month") String month
-    ) throws Exception {
+    ) {
         String fileName = year + "-" + month + ".json";
-        String tradeInfo = fgmService.getTradeInfo(type, year, month);
+        String tradeInfo = fgmService.getTradeInfo(lawdCd, type, year, month);
 
-        return fileService.getDataFile(type, fileName, tradeInfo);
+        return fileService.getDataFile(lawdCd, type, fileName, tradeInfo);
     }
 
     @PutMapping(value="/{type}/latest/{year}/{month}")
     public ResponseEntity<MsgEntity> saveLatestTradeData(
             @PathVariable("type") String type,
             @PathVariable("year") String year,
-            @PathVariable("month") String month
+            @PathVariable("month") String month,
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.saveLatestTradeData(type, year, month);
+        fgmService.saveLatestTradeData(lawdCd, type, year, month);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
@@ -45,9 +47,10 @@ public class FgmController {
             @PathVariable("type") String type,
             @RequestParam(value = "pageNo", required = false, defaultValue = "0") int pageNo,
             @RequestParam(value = "numOfRows", required = false, defaultValue = "0") int numOfRows,
-            @RequestParam("dealYmd") String dealYmd
+            @RequestParam("dealYmd") String dealYmd,
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.saveTrade(type, pageNo, numOfRows, dealYmd);
+        fgmService.saveTrade(type, lawdCd, pageNo, numOfRows, dealYmd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));

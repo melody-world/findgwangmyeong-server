@@ -9,8 +9,8 @@ import java.util.List;
 @Repository
 public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
 
-    public List<TradeEntity> findByYearAndMonth(String year, String month);
+    public List<TradeEntity> findByLawdCdAndYearAndMonth(String lawdCd, String year, String month);
 
-    public long countByYearAndMonth(String year, String month);
+    public long countByLawdCdAndYearAndMonth(String lawdCd, String year, String month);
 
 }
