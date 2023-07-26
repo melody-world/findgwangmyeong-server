@@ -155,7 +155,7 @@ public class FgmService {
             tradeObj.put("apartArea"   , tradeInfo.getApartArea());
             tradeObj.put("apartFloor"  , tradeInfo.getApartFloor());
             tradeObj.put("tradeMoney"  , tradeInfo.getTradeMoney());
-            tradeObj.put("tradeMoney"  , tradeInfo.getRentMoney());
+            tradeObj.put("rentMoney"   , tradeInfo.getRentMoney());
             tradeObj.put("bfTradeMoney", tradeInfo.getBfTradeMoney());
             tradeObj.put("bfRentMoney" , tradeInfo.getBfRentMoney());
             tradeObj.put("tradeType"   , tradeInfo.getTradeType());
