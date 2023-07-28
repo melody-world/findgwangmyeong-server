@@ -1,5 +1,7 @@
 # 광명찾자 API
 #### 📌공공데이터 OpenAPI를 이용한 광명시 아파트 거래 내역 정보를 제공합니다.
+* [국토교통부_아파트매매 실거래자료](https://www.data.go.kr/data/15058747/openapi.do)
+* [국토교통부_아파트 전월세 자료](https://www.data.go.kr/iim/api/selectAPIAcountView.do)
 
 ### API 종류
 * #### 아파트 매매 상세자료 조회
