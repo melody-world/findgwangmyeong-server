@@ -92,7 +92,7 @@
 요청 주소
 |메소드|URL|
 |-----|---|
-|PUT|http://localhost:21010/trade/deal/latest/{param1}/{param2}|
+|PUT|http://localhost:21010/trade/rent/latest/{param1}/{param2}|
 
 요청 파라미터
 |이름|설명|
@@ -108,7 +108,7 @@
 요청 주소
 |메소드|URL|
 |-----|---|
-|GET|http://localhost:21010/trade/deal/file|
+|GET|http://localhost:21010/trade/rent/file|
 
 요청 파라미터
 |이름|설명|
