@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -394,7 +395,38 @@ public class FgmService {
                         .build());
             }
         }
-
     }
+
+    public String geomInfo(String name) {
+        List<String> nameList = new ArrayList<>();
+        String[] nameArray = name.split(",");
+
+        for (String stn : nameArray) {
+            nameList.add(stn);
+        }
+
+        List<GeomEntity> geomList = geomRepository.findByStnKrNmIn(nameList);
+
+        if (CollectionUtils.isEmpty(geomList)) return "";
+
+        JSONObject obj = new JSONObject();
+        JSONArray array = new JSONArray();
+
+        for (GeomEntity geomEntity : geomList) {
+            JSONObject tradeObj = new JSONObject();
+
+            tradeObj.put("lineNm" , geomEntity.getLineNm());
+            tradeObj.put("stnKrNm", geomEntity.getStnKrNm());
+            tradeObj.put("convX"  , geomEntity.getConvX());
+            tradeObj.put("convY"  , geomEntity.getConvY());
+
+            array.add(tradeObj);
+        }
+
+        obj.put("data", array);
+
+        return obj.toString();
+    }
+
 
 }

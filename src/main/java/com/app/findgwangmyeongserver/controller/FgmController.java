@@ -64,5 +64,14 @@ public class FgmController {
                 .body(new MsgEntity("OK", ""));
     }
 
+    @GetMapping(value="/geom/file")
+    public ResponseEntity<Resource> getFileTradeData(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
+            @RequestParam("name") String name
+    ) {
+        String fileName = "geom.json";
+        String tradeInfo = fgmService.geomInfo(name);
 
+        return fileService.getDataFile(lawdCd, "", fileName, tradeInfo);
+    }
 }
