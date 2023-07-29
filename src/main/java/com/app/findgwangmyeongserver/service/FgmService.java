@@ -2,8 +2,10 @@ package com.app.findgwangmyeongserver.service;
 
 import com.app.findgwangmyeongserver.dto.ResponseDTO;
 import com.app.findgwangmyeongserver.dto.TradeDTO;
+import com.app.findgwangmyeongserver.entity.GeomEntity;
 import com.app.findgwangmyeongserver.entity.TradeEntity;
 import com.app.findgwangmyeongserver.entity.TradeRentEntity;
+import com.app.findgwangmyeongserver.repo.GeomRepository;
 import com.app.findgwangmyeongserver.repo.TradeRentRepository;
 import com.app.findgwangmyeongserver.repo.TradeRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +15,14 @@ import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -37,8 +43,23 @@ public class FgmService {
     @Value("${openapi.service.key}")
     private String SERVICE_KEY;
 
+    @Value("${openapi.geom.key}")
+    private String GEOM_API_KEY;
+
+    @Value("${openapi.geom.url}")
+    private String GEOM_API_URL;
+
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
+    private final GeomRepository geomRepository;
+
+    private static String nullToStr(Object str, String strDefault) {
+        if (str == null || str == "null" || "null".equals(str.toString()) || "undefined".equals(str.toString()) || str.toString().length() == 0) {
+            return strDefault;
+        } else {
+            return str.toString();
+        }
+    }
 
     private ResponseDTO callOpenApi(
             String type,
@@ -350,12 +371,30 @@ public class FgmService {
         }
     }
 
-    private static String nullToStr(Object str, String strDefault) {
-		if (str == null || str == "null" || "null".equals(str.toString()) || "undefined".equals(str.toString()) || str.toString().length() == 0) {
-			return strDefault;
-		} else {
-			return str.toString();
-		}
-	}
+    public void saveGeom() throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity(GEOM_API_URL + "?apikey=" + GEOM_API_KEY, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            JSONParser jsonParser = new JSONParser();
+            JSONArray jsonArray = (JSONArray) jsonParser.parse(response.getBody());
+
+            geomRepository.deleteAll();
+
+            for (Object obj : jsonArray) {
+                JSONObject json = (JSONObject) obj;
+                log.info("info : {}", json);
+
+                geomRepository.save(GeomEntity.builder()
+                        .lineNm(String.valueOf(json.get("lineNm")))
+                        .convX(Double.valueOf(String.valueOf(json.get("convX"))).doubleValue())
+                        .convY(Double.valueOf(String.valueOf(json.get("convY"))).doubleValue())
+                        .stnKrNm(String.valueOf(json.get("stnKrNm")))
+                        .outStnNum(String.valueOf(json.get("outStnNum")))
+                        .build());
+            }
+        }
+
+    }
 
 }

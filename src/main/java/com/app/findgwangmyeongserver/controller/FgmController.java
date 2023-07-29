@@ -56,5 +56,13 @@ public class FgmController {
                 .body(new MsgEntity("OK", ""));
     }
 
+    @PostMapping(value="/geom")
+    public ResponseEntity<MsgEntity> saveGeom() throws Exception {
+        fgmService.saveGeom();
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
 
 }
