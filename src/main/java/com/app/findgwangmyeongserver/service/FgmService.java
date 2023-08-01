@@ -2,12 +2,8 @@ package com.app.findgwangmyeongserver.service;
 
 import com.app.findgwangmyeongserver.dto.ResponseDTO;
 import com.app.findgwangmyeongserver.dto.TradeDTO;
-import com.app.findgwangmyeongserver.entity.GeomEntity;
-import com.app.findgwangmyeongserver.entity.TradeEntity;
-import com.app.findgwangmyeongserver.entity.TradeRentEntity;
-import com.app.findgwangmyeongserver.repo.GeomRepository;
-import com.app.findgwangmyeongserver.repo.TradeRentRepository;
-import com.app.findgwangmyeongserver.repo.TradeRepository;
+import com.app.findgwangmyeongserver.entity.*;
+import com.app.findgwangmyeongserver.repo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdom2.Document;
@@ -53,6 +49,8 @@ public class FgmService {
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
     private final GeomRepository geomRepository;
+    private final GeomColorRepository geomColorRepository;
+    private final LawdRepository lawdRepository;
 
     private static String nullToStr(Object str, String strDefault) {
         if (str == null || str == "null" || "null".equals(str.toString()) || "undefined".equals(str.toString()) || str.toString().length() == 0) {
@@ -428,5 +426,36 @@ public class FgmService {
         return obj.toString();
     }
 
+    public String lawdList() {
+        List<LawdEntity> lawdList = lawdRepository.findAll();
+        List<GeomColorEntity> geomList = geomColorRepository.findAll();
+
+        JSONObject obj = new JSONObject();
+        JSONArray lawdArray = new JSONArray();
+        JSONArray geomArray = new JSONArray();
+
+        for (LawdEntity lawdEntity : lawdList) {
+            JSONObject lawdObj = new JSONObject();
+
+            lawdObj.put("lawdCd", lawdEntity.getLawdCd());
+            lawdObj.put("lawdNm", lawdEntity.getLawdNm());
+
+            lawdArray.add(lawdObj);
+        }
+
+        for (GeomColorEntity geomColorEntity : geomList) {
+            JSONObject lawdObj = new JSONObject();
+
+            lawdObj.put("lineNm"    , geomColorEntity.getLineNm());
+            lawdObj.put("colorValue", geomColorEntity.getColorValue());
+
+            geomArray.add(lawdObj);
+        }
+
+        obj.put("data"    , lawdArray);
+        obj.put("geomList", geomArray);
+
+        return obj.toString();
+    }
 
 }

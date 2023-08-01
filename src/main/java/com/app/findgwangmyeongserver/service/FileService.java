@@ -31,9 +31,14 @@ public class FileService {
     ) {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
-        String uploadPath = "".equals(type)
+
+        String uploadPath = UPLOAD_FILE_DIR;
+
+        if (!"".equals(lawdCd)) {
+            uploadPath = "".equals(type)
                             ? UPLOAD_FILE_DIR + "/" + lawdCd
                             : UPLOAD_FILE_DIR + "/" + lawdCd + "/" + type;
+        }
 
         String uploadFile = uploadPath + "/" + fileName;
 
