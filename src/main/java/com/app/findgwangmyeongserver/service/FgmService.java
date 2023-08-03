@@ -294,6 +294,7 @@ public class FgmService {
                         break;
                     case "지번":
                         tradeDTO.setAddress(value);
+                        break;
                     case "등기일자":
                         tradeDTO.setConfirmYmd(value);
                         break;
