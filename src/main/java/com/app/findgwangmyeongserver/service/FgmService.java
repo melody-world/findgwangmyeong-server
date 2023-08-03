@@ -141,6 +141,7 @@ public class FgmService {
             tradeObj.put("apartDong"  , tradeInfo.getApartDong());
             tradeObj.put("apartStreet", tradeInfo.getApartStreet());
             tradeObj.put("address"    , tradeInfo.getAddress());
+            tradeObj.put("confirmYmd"  , tradeInfo.getConfirmYmd());
 
             array.add(tradeObj);
         }
