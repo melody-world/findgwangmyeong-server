@@ -31,5 +31,6 @@ public class TradeEntity {
     private String apartDong;
     private String apartStreet;
     private String address;
+    private String confirmYmd;
 
 }

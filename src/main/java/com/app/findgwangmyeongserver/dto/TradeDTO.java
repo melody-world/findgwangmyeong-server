@@ -21,5 +21,6 @@ public class TradeDTO {
     private String apartDong;   //법정동
     private String apartStreet; //도로명
     private String address;     //지번
+    private String confirmYmd;   //등기일자
 
 }
