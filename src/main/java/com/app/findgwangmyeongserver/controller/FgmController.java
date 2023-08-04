@@ -29,6 +29,15 @@ public class FgmController {
         return fileService.getDataFile(lawdCd, type, fileName, tradeInfo);
     }
 
+    /**
+     * 광명찾자_아파트 거래내역 최신화
+     * @param type   - 거래타입(deal : 매매, rent : 전월세)
+     * @param year   - 거래년도
+     * @param month  - 거래월
+     * @param lawdCd - 지역코드
+     * @return result - 1 : 업데이트 내역 존재, 0 : 업데이트 내역 없음
+     * @throws Exception
+     */
     @PutMapping(value="/{type}/latest/{year}/{month}")
     public ResponseEntity<MsgEntity> saveLatestTradeData(
             @PathVariable("type") String type,
@@ -36,24 +45,10 @@ public class FgmController {
             @PathVariable("month") String month,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.saveLatestTradeData(lawdCd, type, year, month);
+        int result = fgmService.saveLatestTradeData(lawdCd, type, year, month);
 
         return ResponseEntity.ok()
-                .body(new MsgEntity("OK", ""));
-    }
-
-    @PostMapping(value="/{type}/save")
-    public ResponseEntity<MsgEntity> saveTrade(
-            @PathVariable("type") String type,
-            @RequestParam(value = "pageNo", required = false, defaultValue = "0") int pageNo,
-            @RequestParam(value = "numOfRows", required = false, defaultValue = "0") int numOfRows,
-            @RequestParam("dealYmd") String dealYmd,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
-    ) throws Exception {
-        fgmService.saveTrade(type, lawdCd, pageNo, numOfRows, dealYmd);
-
-        return ResponseEntity.ok()
-                .body(new MsgEntity("OK", ""));
+                .body(new MsgEntity("OK", result == 1 ? "Data has been updated" : "No data changed"));
     }
 
     @PostMapping(value="/geom")

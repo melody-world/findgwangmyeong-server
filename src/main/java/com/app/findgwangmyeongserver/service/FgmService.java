@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
+import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -73,6 +74,7 @@ public class FgmService {
         sb.append("&LAWD_CD=" + lawdCd);
         sb.append("&DEAL_YMD=" + dealYmd);
 
+        // 페이지 번호는 매매 자료에서만 존재한다.
         if ("deal".equals(type)) {
             if (pageNo != 0) sb.append("&pageNo=" + pageNo);
             if (numOfRows != 0) sb.append("&numOfRows=" + numOfRows);
@@ -195,18 +197,21 @@ public class FgmService {
         return obj.toString();
     }
 
-    public void saveLatestTradeData(
+    @Transactional
+    public int saveLatestTradeData(
             String lawdCd,
             String type,
             String year,
             String month
     ) throws Exception {
+        int result = 0;
         String deelYmd = year + month;
 
-        ResponseDTO response = callOpenApi(type, lawdCd,0, 0, deelYmd);
+        ResponseDTO checkResponse = callOpenApi(type, lawdCd,0, 0, deelYmd);
 
-        if ("OK".equals(response.getMessage())) {
-            Element body = response.getBody();
+        //1) 최신 데이터 개수 체크
+        if ("OK".equals(checkResponse.getMessage())) {
+            Element body = checkResponse.getBody();
 
             //총 매매 거래내역 수(최신)
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
@@ -218,36 +223,29 @@ public class FgmService {
 
             int numOfRows = totalCount - currentCount;
 
+            //2) 데이터 비교 후 저장
             if (numOfRows > 0) {
-                if (currentCount == 0) {   //등록된 거래내역이 없는 경우
-                    saveTrade(type, lawdCd, 1, numOfRows, deelYmd);
-                } else {
-                    saveTrade(type, lawdCd, 2, numOfRows, deelYmd);
+                ResponseDTO response = callOpenApi(type, lawdCd, 1, numOfRows, deelYmd);
+
+                if ("OK".equals(response.getMessage())) {
+                    body = response.getBody();
+                    Element items = body.getChild("items");
+                    List<Element> itemList = items.getChildren("item");
+
+                    if ("deal".equals(type)) {
+                        saveTradeDeal(itemList);
+                    } else {
+                        tradeRentRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
+
+                        saveTradeRent(itemList);
+                    }
                 }
+
+                result = 1;
             }
         }
-    }
 
-    public void saveTrade(
-            String type,
-            String lawdCd,
-            int pageNo,
-            int numOfRows,
-            String dealYmd
-    ) throws Exception {
-        ResponseDTO response = callOpenApi(type, lawdCd, pageNo, numOfRows, dealYmd);
-
-        if ("OK".equals(response.getMessage())) {
-            Element body = response.getBody();
-            Element items = body.getChild("items");
-            List<Element> itemList = items.getChildren("item");
-
-            if ("deal".equals(type)) {
-                saveTradeDeal(itemList);
-            } else {
-                saveTradeRent(itemList);
-            }
-        }
+        return result;
     }
 
     private void saveTradeDeal(List<Element> itemList) {
