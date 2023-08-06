@@ -78,11 +78,5 @@ public class FgmController {
         return fileService.getDataFile("", "", fileName, lawdInfo);
     }
 
-    @GetMapping(value="/test")
-    public ResponseEntity<Resource> test() {
-        String fileName = "lawd.json";
-        String lawdInfo = fgmService.lawdList();
 
-        return fileService.getDataFile("", "", fileName, lawdInfo);
-    }
 }
