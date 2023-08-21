@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -221,11 +222,9 @@ public class FgmService {
                                                 tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
             int currentCount = Optional.of(count).orElse(0L).intValue();
 
-            int numOfRows = totalCount - currentCount;
-
-            //2) 데이터 비교 후 저장
-            if (numOfRows > 0) {
-                ResponseDTO response = callOpenApi(type, lawdCd, 1, numOfRows, deelYmd);
+            //2) 데이터 변경이 있는 경우 저장
+            if (totalCount != currentCount) {
+                ResponseDTO response = callOpenApi(type, lawdCd, 1, totalCount, deelYmd);
 
                 if ("OK".equals(response.getMessage())) {
                     body = response.getBody();
@@ -233,6 +232,8 @@ public class FgmService {
                     List<Element> itemList = items.getChildren("item");
 
                     if ("deal".equals(type)) {
+                        tradeRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
+
                         saveTradeDeal(itemList);
                     } else {
                         tradeRentRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);

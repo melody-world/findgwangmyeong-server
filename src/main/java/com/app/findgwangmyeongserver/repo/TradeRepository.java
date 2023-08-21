@@ -13,4 +13,6 @@ public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
 
     public long countByLawdCdAndYearAndMonth(String lawdCd, String year, String month);
 
+    public void deleteByLawdCdAndYearAndMonth(String lawdCd, String year, String month);
+
 }

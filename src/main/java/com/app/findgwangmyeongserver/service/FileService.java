@@ -2,6 +2,7 @@ package com.app.findgwangmyeongserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -64,6 +67,29 @@ public class FileService {
         }
 
         return ResponseEntity.ok().body(null);
+    }
+
+    public void makeDataFile(
+            String lawdCd,
+            String type,
+            List<Map<String, Object>> fileList
+    ) throws IOException {
+        String uploadPath = UPLOAD_FILE_DIR + "/" + lawdCd + "/" + type;
+
+        if (CollectionUtils.isNotEmpty(fileList)) {
+            for (Map<String, Object> file : fileList) {
+                String fileName = (String) file.get("fileName");
+                String fileInfo = (String) file.get("tradeInfo");
+
+                String uploadFile = uploadPath + "/" + fileName;
+
+                checkDirectory(uploadPath);
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(uploadFile, false));
+                writer.write(fileInfo);
+                writer.close();
+            }
+        }
     }
 
     private void checkDirectory(String filePath) {
