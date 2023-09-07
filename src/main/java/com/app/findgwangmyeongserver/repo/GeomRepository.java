@@ -10,4 +10,6 @@ import java.util.List;
 public interface GeomRepository extends JpaRepository<GeomEntity, Long> {
 
     List<GeomEntity> findByStnKrNmIn(List<String> names);
+
+    List<GeomEntity> findByOutStnNum(String outStnNum);
 }

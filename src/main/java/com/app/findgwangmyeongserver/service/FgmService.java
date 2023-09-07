@@ -461,4 +461,29 @@ public class FgmService {
         return obj.toString();
     }
 
+    public String getGeomInfoToLawd(String lawdName) {
+        List<GeomEntity> geomList = geomRepository.findByOutStnNum(lawdName);
+
+        if (CollectionUtils.isEmpty(geomList)) return "";
+
+        JSONObject obj = new JSONObject();
+        JSONArray array = new JSONArray();
+
+        for (GeomEntity geomEntity : geomList) {
+            JSONObject tradeObj = new JSONObject();
+
+            tradeObj.put("lineNm" , geomEntity.getLineNm());
+            tradeObj.put("stnKrNm", geomEntity.getStnKrNm());
+            tradeObj.put("convX"  , geomEntity.getConvX());
+            tradeObj.put("convY"  , geomEntity.getConvY());
+
+            array.add(tradeObj);
+        }
+
+        obj.put("data", array);
+
+        return obj.toString();
+    }
+
+
 }

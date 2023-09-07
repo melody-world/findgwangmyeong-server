@@ -24,9 +24,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FileService {
 
-    final static String UPLOAD_FILE_DIR = System.getProperty("user.home") + "/fgm";
+    final static String UPLOAD_FILE_DIR = System.getProperty("user.home");
 
     public ResponseEntity<Resource> getDataFile(
+            String lawdDir,
             String lawdCd,
             String type,
             String fileName,
@@ -35,7 +36,7 @@ public class FileService {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
 
-        String uploadPath = UPLOAD_FILE_DIR;
+        String uploadPath = UPLOAD_FILE_DIR + "/" + lawdDir;
 
         if (!"".equals(lawdCd)) {
             uploadPath = "".equals(type)

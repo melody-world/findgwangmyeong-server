@@ -24,8 +24,9 @@ public class FgmController {
     private final FileService fileService;
     private final LocalDateTime now = LocalDateTime.now();
 
-    @GetMapping(value="{type}/file")
+    @GetMapping(value="{lawdDir}/{type}/file")
     public ResponseEntity<Resource> getFileTradeData(
+            @PathVariable("lawdDir") String lawdDir,
             @PathVariable("type") String type,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
             @RequestParam("year") String year,
@@ -34,7 +35,7 @@ public class FgmController {
         String fileName = year + "-" + month + ".json";
         String tradeInfo = fgmService.getTradeInfo(lawdCd, type, year, month);
 
-        return fileService.getDataFile(lawdCd, type, fileName, tradeInfo);
+        return fileService.getDataFile(lawdDir, lawdCd, type, fileName, tradeInfo);
     }
 
     @GetMapping(value="{type}/file/cond")
@@ -118,23 +119,37 @@ public class FgmController {
                 .body(new MsgEntity("OK", ""));
     }
 
-    @GetMapping(value="/geom/file")
-    public ResponseEntity<Resource> getFileGeomData(
+    @GetMapping(value="{lawdDir}/geom/file")
+    public ResponseEntity<Resource> getFileGeomDataToName(
+            @PathVariable("lawdDir") String lawdDir,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
             @RequestParam("name") String name
     ) {
         String fileName = "geom.json";
         String tradeInfo = fgmService.geomInfo(name);
 
-        return fileService.getDataFile(lawdCd, "", fileName, tradeInfo);
+        return fileService.getDataFile(lawdDir, lawdCd, "", fileName, tradeInfo);
     }
 
-    @GetMapping(value="/file/lawd")
-    public ResponseEntity<Resource> getFileLawd() {
+    @GetMapping(value="{lawdDir}/file/lawd")
+    public ResponseEntity<Resource> getLawdFile(
+            @PathVariable("lawdDir") String lawdDir
+    ) {
         String fileName = "lawd.json";
         String lawdInfo = fgmService.lawdList();
 
-        return fileService.getDataFile("", "", fileName, lawdInfo);
+        return fileService.getDataFile(lawdDir, "", "", fileName, lawdInfo);
+    }
+
+    @GetMapping(value="{lawdDir}/geom/lawd/file")
+    public ResponseEntity<Resource> getLawdFileGeomDataToLawd(
+            @PathVariable(value = "lawdDir") String lawdDir,
+            @RequestParam(value = "lawdName") String lawdName
+    ) {
+        String fileName = "geom.json";
+        String tradeInfo = fgmService.getGeomInfoToLawd(lawdName);
+
+        return fileService.getDataFile(lawdDir, "", "", fileName, tradeInfo);
     }
 
 
