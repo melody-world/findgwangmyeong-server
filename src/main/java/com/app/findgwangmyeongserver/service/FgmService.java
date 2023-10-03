@@ -1,5 +1,6 @@
 package com.app.findgwangmyeongserver.service;
 
+import com.app.findgwangmyeongserver.dto.ApartListDTO;
 import com.app.findgwangmyeongserver.dto.ResponseDTO;
 import com.app.findgwangmyeongserver.dto.TradeDTO;
 import com.app.findgwangmyeongserver.entity.*;
@@ -14,8 +15,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +38,21 @@ public class FgmService {
     @Value("${openapi.rent.url}")
     private String API_RENT_URL;
 
+    @Value("${openapi.apartList.url}")
+    private String API_APART_LIST_URL;
+
+    @Value("${openapi.apartInfo.url}")
+    private String API_APART_INFO_URL;
+
+    @Value("${naver.geocode.url}")
+    private String NAVER_GEOCODE_URL;
+
+    @Value("${naver.geocode.key.id}")
+    private String NAVER_GEOCODE_KEY_ID;
+
+    @Value("${naver.geocode.key}")
+    private String NAVER_GEOCODE_KEY;
+
     @Value("${openapi.service.key}")
     private String SERVICE_KEY;
 
@@ -50,6 +64,7 @@ public class FgmService {
 
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
+    private final ApartListRepository apartListRepository;
     private final GeomRepository geomRepository;
     private final GeomColorRepository geomColorRepository;
     private final LawdRepository lawdRepository;
@@ -484,6 +499,178 @@ public class FgmService {
 
         return obj.toString();
     }
+
+    private ResponseDTO callApartListApi(String lawdCd) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(API_APART_LIST_URL);
+        sb.append("?serviceKey=" + SERVICE_KEY);
+        sb.append("&sigunguCode=" + lawdCd);
+        sb.append("&pageNo=1");
+        sb.append("&numOfRows=999999");
+
+        URL url = new URL(sb.toString());
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("Content-Type","application/xml");
+        conn.setRequestMethod("GET");
+        conn.connect();
+
+        SAXBuilder builder = new SAXBuilder();
+        Document document = builder.build(conn.getInputStream());
+
+        Element root = document.getRootElement();
+        Element header = root.getChild("header");
+        Element body = null;
+        String message = "";
+
+        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
+            message = "OK";
+            body = root.getChild("body");
+        }
+
+        return ResponseDTO.builder()
+                .message(message)
+                .header(header)
+                .body(body).build();
+    }
+
+    private ResponseDTO callApartInfoApi(String apartCode) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(API_APART_INFO_URL);
+        sb.append("?serviceKey=" + SERVICE_KEY);
+        sb.append("&kaptCode=" + apartCode);
+
+        URL url = new URL(sb.toString());
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("Content-Type","application/xml");
+        conn.setRequestMethod("GET");
+        conn.connect();
+
+        SAXBuilder builder = new SAXBuilder();
+        Document document = builder.build(conn.getInputStream());
+
+        Element root = document.getRootElement();
+        Element header = root.getChild("header");
+        Element body = null;
+        String message = "";
+
+        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
+            message = "OK";
+            body = root.getChild("body");
+        }
+
+        return ResponseDTO.builder()
+                .message(message)
+                .header(header)
+                .body(body).build();
+    }
+
+    @Transactional
+    public void saveApart(String lawdCd) throws Exception {
+        ResponseDTO responseDTO = callApartListApi(lawdCd);
+
+        if ("OK".equals(responseDTO.getMessage())) {
+            Element body = responseDTO.getBody();
+            Element items = body.getChild("items");
+
+            int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
+
+            if (totalCount > 0) {
+                apartListRepository.deleteAll();
+
+                List<Element> itemList = items.getChildren("item");
+
+                for (Element item : itemList) {
+                    List<Element> tradeInfoList = item.getChildren();
+                    ApartListDTO apartListDTO = new ApartListDTO();
+                    apartListDTO.setLawdCd(lawdCd);
+
+                    for (Element info : tradeInfoList) {
+                        String value = nullToStr(info.getContent(0).getValue(), "").trim();
+
+                        switch (info.getName()) {
+                            case "kaptCode":
+                                apartListDTO.setApartCode(value);
+                                break;
+                            case "kaptName":
+                                apartListDTO.setApartName(value);
+                                break;
+                        }
+                    }
+
+                    ModelMapper modelMapper = new ModelMapper();
+                    ApartListEntity apartListEntity = modelMapper.map(apartListDTO, ApartListEntity.class);
+
+                    apartListRepository.save(apartListEntity);
+                }
+            }
+        }
+    }
+
+    public void saveApartInfo(String lawdCd) throws Exception {
+        List<ApartListEntity> apartList = apartListRepository.findByLawdCd(lawdCd);
+
+        for (ApartListEntity apartEntity : apartList) {
+            log.info(apartEntity.toString());
+
+            ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
+
+            if ("OK".equals(responseDTO.getMessage())) {
+                Element body = responseDTO.getBody();
+                Element item = body.getChild("item");
+                List<Element> itemList = item.getChildren();
+
+                for (Element element : itemList) {
+                    String value = nullToStr(element.getContent(0).getValue(), "").trim();
+
+                    switch (element.getName()) {
+                        case "kaptAddr":
+                            apartEntity.setApartAddress(value);
+                            break;
+                    }
+                }
+
+                apartListRepository.save(apartEntity);
+            }
+        }
+    }
+
+    public void savecApartConv(String lawdCd) throws Exception {
+        List<ApartListEntity> apartList = apartListRepository.findByLawdCd(lawdCd);
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-NCP-APIGW-API-KEY-ID", NAVER_GEOCODE_KEY_ID);
+        headers.set("X-NCP-APIGW-API-KEY", NAVER_GEOCODE_KEY);
+
+        HttpEntity request = new HttpEntity(headers);
+
+        for (ApartListEntity apartEntity : apartList) {
+            log.info(apartEntity.toString());
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    NAVER_GEOCODE_URL + "?query=" + apartEntity.getApartAddress() + "&count=1",
+                    HttpMethod.GET,
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JSONParser jsonParser = new JSONParser();
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
+                JSONArray jsonArray = (JSONArray) jsonObject.get("addresses");
+
+                for (Object obj : jsonArray) {
+                    JSONObject object = (JSONObject) obj;
+
+                    apartEntity.setConvX(Double.parseDouble(String.valueOf(object.get("x"))));
+                    apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
+                }
+
+                apartListRepository.save(apartEntity);
+            }
+        }
+    }
+
 
 
 }

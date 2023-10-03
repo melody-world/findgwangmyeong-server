@@ -152,5 +152,52 @@ public class FgmController {
         return fileService.getDataFile(lawdDir, "", "", fileName, tradeInfo);
     }
 
+    /**
+     * 지역코드로 해당 지역 아파트 리스트 저장 - 단지코드 획득(국토교통부_공동주택 단지 목록제공 서비스)
+     * @param lawdCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/apart")
+    public ResponseEntity<MsgEntity> saveApartList(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    ) throws Exception {
+        fgmService.saveApart(lawdCd);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
+    /**
+     * 단지코드로 아파트 주소 조회
+     * @param lawdCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/apart/info")
+    public ResponseEntity<MsgEntity> saveApartInfo(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    ) throws Exception {
+        fgmService.saveApartInfo(lawdCd);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
+    /**
+     * 아파트 주소로 좌표 획득
+     * @param lawdCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/apart/conv")
+    public ResponseEntity<MsgEntity> saveApartConv(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    ) throws Exception {
+        fgmService.savecApartConv(lawdCd);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
 
 }
