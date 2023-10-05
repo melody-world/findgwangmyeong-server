@@ -64,7 +64,7 @@ public class FgmService {
 
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
-    private final ApartListRepository apartListRepository;
+    private final ApartRepository apartRepository;
     private final GeomRepository geomRepository;
     private final GeomColorRepository geomColorRepository;
     private final LawdRepository lawdRepository;
@@ -575,7 +575,7 @@ public class FgmService {
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
             if (totalCount > 0) {
-                apartListRepository.deleteAll();
+                apartRepository.deleteAll();
 
                 List<Element> itemList = items.getChildren("item");
 
@@ -598,20 +598,19 @@ public class FgmService {
                     }
 
                     ModelMapper modelMapper = new ModelMapper();
-                    ApartListEntity apartListEntity = modelMapper.map(apartListDTO, ApartListEntity.class);
+                    ApartEntity apartListEntity = modelMapper.map(apartListDTO, ApartEntity.class);
 
-                    apartListRepository.save(apartListEntity);
+                    apartRepository.save(apartListEntity);
                 }
             }
         }
     }
 
+    @Transactional
     public void saveApartInfo(String lawdCd) throws Exception {
-        List<ApartListEntity> apartList = apartListRepository.findByLawdCd(lawdCd);
+        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
 
-        for (ApartListEntity apartEntity : apartList) {
-            log.info(apartEntity.toString());
-
+        for (ApartEntity apartEntity : apartList) {
             ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
 
             if ("OK".equals(responseDTO.getMessage())) {
@@ -622,20 +621,21 @@ public class FgmService {
                 for (Element element : itemList) {
                     String value = nullToStr(element.getContent(0).getValue(), "").trim();
 
-                    switch (element.getName()) {
-                        case "kaptAddr":
-                            apartEntity.setApartAddress(value);
-                            break;
+                    if ("kaptAddr".equals(element.getName())) {
+                        apartEntity.setApartAddress(value);
                     }
                 }
 
-                apartListRepository.save(apartEntity);
+                apartRepository.save(apartEntity);
+
+                log.info(apartEntity.toString());
             }
         }
     }
 
-    public void savecApartConv(String lawdCd) throws Exception {
-        List<ApartListEntity> apartList = apartListRepository.findByLawdCd(lawdCd);
+    @Transactional
+    public void saveApartConv(String lawdCd) throws Exception {
+        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -644,9 +644,7 @@ public class FgmService {
 
         HttpEntity request = new HttpEntity(headers);
 
-        for (ApartListEntity apartEntity : apartList) {
-            log.info(apartEntity.toString());
-
+        for (ApartEntity apartEntity : apartList) {
             ResponseEntity<String> response = restTemplate.exchange(
                     NAVER_GEOCODE_URL + "?query=" + apartEntity.getApartAddress() + "&count=1",
                     HttpMethod.GET,
@@ -666,11 +664,35 @@ public class FgmService {
                     apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
                 }
 
-                apartListRepository.save(apartEntity);
+                apartRepository.save(apartEntity);
+
+                log.info(apartEntity.toString());
             }
         }
     }
 
+    public String getApartList(String lawdCd) {
+        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
 
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+
+        for (ApartEntity apartEntity : apartList) {
+            JSONObject obj = new JSONObject();
+
+            obj.put("apartCode"   , apartEntity.getApartCode());
+            obj.put("apartName"   , apartEntity.getApartName());
+            obj.put("apartAddress", apartEntity.getApartAddress());
+            obj.put("convX"       , apartEntity.getConvX());
+            obj.put("convY"       , apartEntity.getConvY());
+            obj.put("lawdCd"      , apartEntity.getLawdCd());
+
+            jsonArray.add(obj);
+        }
+
+        jsonObject.put("data", jsonArray);
+
+        return jsonObject.toString();
+    }
 
 }

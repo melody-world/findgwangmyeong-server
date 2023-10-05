@@ -13,7 +13,7 @@ import javax.persistence.*;
 @Table(name="APART_LIST")
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApartListEntity {
+public class ApartEntity {
 
     @Id
     private String apartCode;

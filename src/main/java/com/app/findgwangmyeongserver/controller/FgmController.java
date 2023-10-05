@@ -194,10 +194,26 @@ public class FgmController {
     public ResponseEntity<MsgEntity> saveApartConv(
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.savecApartConv(lawdCd);
+        fgmService.saveApartConv(lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
+    }
+
+    /**
+     * 아파트 단지 파일 저장
+     * @param lawdDir
+     * @return
+     */
+    @GetMapping(value="/apart/{lawdDir}/file")
+    public ResponseEntity<Resource> getApartListFile(
+            @PathVariable("lawdDir") String lawdDir,
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    ) {
+        String fileName = "apart.json";
+        String lawdInfo = fgmService.getApartList(lawdCd);
+
+        return fileService.getDataFile(lawdDir, "", "", fileName, lawdInfo);
     }
 
 }
