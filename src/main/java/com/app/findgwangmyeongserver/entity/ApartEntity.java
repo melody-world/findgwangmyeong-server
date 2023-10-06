@@ -16,9 +16,13 @@ import javax.persistence.*;
 public class ApartEntity {
 
     @Id
-    private String apartCode;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long seq;
+
     private String apartName;
-    private String apartAddress;
+    private String apartDong;
+    private String address;
+    private String apartStreet;
     @Column(name="CONV_X")
     private double convX;
     @Column(name="CONV_Y")

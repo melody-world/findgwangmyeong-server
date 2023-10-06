@@ -150,32 +150,16 @@ public class FgmController {
     }
 
     /**
-     * 지역코드로 해당 지역 아파트 리스트 저장 - 단지코드 획득(국토교통부_공동주택 단지 목록제공 서비스)
+     * 거래 내역을 조회해 아파트 리스트 정리
      * @param lawdCd
      * @return
      * @throws Exception
      */
     @PostMapping(value="/apart")
-    public ResponseEntity<MsgEntity> saveApartList(
+    public ResponseEntity<MsgEntity> saveApart(
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
         fgmService.saveApart(lawdCd);
-
-        return ResponseEntity.ok()
-                .body(new MsgEntity("OK", ""));
-    }
-
-    /**
-     * 단지코드로 아파트 주소 조회
-     * @param lawdCd
-     * @return
-     * @throws Exception
-     */
-    @PostMapping(value="/apart/info")
-    public ResponseEntity<MsgEntity> saveApartInfo(
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
-    ) throws Exception {
-        fgmService.saveApartInfo(lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));

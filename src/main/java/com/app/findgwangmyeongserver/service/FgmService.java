@@ -1,6 +1,6 @@
 package com.app.findgwangmyeongserver.service;
 
-import com.app.findgwangmyeongserver.dto.ApartListDTO;
+import com.app.findgwangmyeongserver.dto.ApartDTO;
 import com.app.findgwangmyeongserver.dto.ResponseDTO;
 import com.app.findgwangmyeongserver.dto.TradeDTO;
 import com.app.findgwangmyeongserver.entity.*;
@@ -26,6 +26,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -502,6 +503,60 @@ public class FgmService {
         return obj.toString();
     }
 
+    @Transactional
+    public void saveApart(String lawdCd) throws Exception {
+        List<TradeRepository.Apart> apartList = tradeRepository.findByLawdCd(lawdCd);
+
+        for (TradeRepository.Apart apart : apartList) {
+            apartRepository.save(ApartEntity.builder()
+                    .apartName(apart.getApartName())
+                    .apartDong(apart.getApartDong())
+                    .address(apart.getAddress())
+                    .apartStreet(apart.getApartStreet())
+                    .lawdCd(apart.getLawdCd())
+                    .build());
+        }
+    }
+
+    @Transactional
+    public void saveApartConv(String lawdCd) throws Exception {
+        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-NCP-APIGW-API-KEY-ID", NAVER_GEOCODE_KEY_ID);
+        headers.set("X-NCP-APIGW-API-KEY", NAVER_GEOCODE_KEY);
+
+        HttpEntity request = new HttpEntity(headers);
+
+        for (ApartEntity apartEntity : apartList) {
+            String address = apartEntity.getApartDong() + " " + apartEntity.getAddress();
+            ResponseEntity<String> response = restTemplate.exchange(
+                    NAVER_GEOCODE_URL + "?query=" + address + "&count=1",
+                    HttpMethod.GET,
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JSONParser jsonParser = new JSONParser();
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
+                JSONArray jsonArray = (JSONArray) jsonObject.get("addresses");
+
+                for (Object obj : jsonArray) {
+                    JSONObject object = (JSONObject) obj;
+
+                    apartEntity.setConvX(Double.parseDouble(String.valueOf(object.get("x"))));
+                    apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
+                }
+
+                apartRepository.save(apartEntity);
+
+                log.info(apartEntity.toString());
+            }
+        }
+    }
+
     private ResponseDTO callApartListApi(String lawdCd) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append(API_APART_LIST_URL);
@@ -535,39 +590,8 @@ public class FgmService {
                 .body(body).build();
     }
 
-    private ResponseDTO callApartInfoApi(String apartCode) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        sb.append(API_APART_INFO_URL);
-        sb.append("?serviceKey=" + SERVICE_KEY);
-        sb.append("&kaptCode=" + apartCode);
-
-        URL url = new URL(sb.toString());
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestProperty("Content-Type","application/xml");
-        conn.setRequestMethod("GET");
-        conn.connect();
-
-        SAXBuilder builder = new SAXBuilder();
-        Document document = builder.build(conn.getInputStream());
-
-        Element root = document.getRootElement();
-        Element header = root.getChild("header");
-        Element body = null;
-        String message = "";
-
-        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
-            message = "OK";
-            body = root.getChild("body");
-        }
-
-        return ResponseDTO.builder()
-                .message(message)
-                .header(header)
-                .body(body).build();
-    }
-
     @Transactional
-    public void saveApart(String lawdCd) throws Exception {
+    public void saveSigunguApart(String lawdCd) throws Exception {
         ResponseDTO responseDTO = callApartListApi(lawdCd);
 
         if ("OK".equals(responseDTO.getMessage())) {
@@ -581,94 +605,29 @@ public class FgmService {
 
                 List<Element> itemList = items.getChildren("item");
 
-                for (Element item : itemList) {
-                    List<Element> tradeInfoList = item.getChildren();
-                    ApartListDTO apartListDTO = new ApartListDTO();
-                    apartListDTO.setLawdCd(lawdCd);
-
-                    for (Element info : tradeInfoList) {
-                        String value = nullToStr(info.getContent(0).getValue(), "").trim();
-
-                        switch (info.getName()) {
-                            case "kaptCode":
-                                apartListDTO.setApartCode(value);
-                                break;
-                            case "kaptName":
-                                apartListDTO.setApartName(value);
-                                break;
-                        }
-                    }
-
-                    ModelMapper modelMapper = new ModelMapper();
-                    ApartEntity apartListEntity = modelMapper.map(apartListDTO, ApartEntity.class);
-
-                    apartRepository.save(apartListEntity);
-                }
-            }
-        }
-    }
-
-    @Transactional
-    public void saveApartInfo(String lawdCd) throws Exception {
-        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
-
-        for (ApartEntity apartEntity : apartList) {
-            ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
-
-            if ("OK".equals(responseDTO.getMessage())) {
-                Element body = responseDTO.getBody();
-                Element item = body.getChild("item");
-                List<Element> itemList = item.getChildren();
-
-                for (Element element : itemList) {
-                    String value = nullToStr(element.getContent(0).getValue(), "").trim();
-
-                    if ("kaptAddr".equals(element.getName())) {
-                        apartEntity.setApartAddress(value);
-                    }
-                }
-
-                apartRepository.save(apartEntity);
-
-                log.info(apartEntity.toString());
-            }
-        }
-    }
-
-    @Transactional
-    public void saveApartConv(String lawdCd) throws Exception {
-        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-NCP-APIGW-API-KEY-ID", NAVER_GEOCODE_KEY_ID);
-        headers.set("X-NCP-APIGW-API-KEY", NAVER_GEOCODE_KEY);
-
-        HttpEntity request = new HttpEntity(headers);
-
-        for (ApartEntity apartEntity : apartList) {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    NAVER_GEOCODE_URL + "?query=" + apartEntity.getApartAddress() + "&count=1",
-                    HttpMethod.GET,
-                    request,
-                    String.class
-            );
-
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JSONParser jsonParser = new JSONParser();
-                JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
-                JSONArray jsonArray = (JSONArray) jsonObject.get("addresses");
-
-                for (Object obj : jsonArray) {
-                    JSONObject object = (JSONObject) obj;
-
-                    apartEntity.setConvX(Double.parseDouble(String.valueOf(object.get("x"))));
-                    apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
-                }
-
-                apartRepository.save(apartEntity);
-
-                log.info(apartEntity.toString());
+//                for (Element item : itemList) {
+//                    List<Element> tradeInfoList = item.getChildren();
+//                    ApartListDTO apartListDTO = new ApartListDTO();
+//                    apartListDTO.setLawdCd(lawdCd);
+//
+//                    for (Element info : tradeInfoList) {
+//                        String value = nullToStr(info.getContent(0).getValue(), "").trim();
+//
+//                        switch (info.getName()) {
+//                            case "kaptCode":
+//                                apartListDTO.setApartCode(value);
+//                                break;
+//                            case "kaptName":
+//                                apartListDTO.setApartName(value);
+//                                break;
+//                        }
+//                    }
+//
+//                    ModelMapper modelMapper = new ModelMapper();
+//                    ApartEntity apartListEntity = modelMapper.map(apartListDTO, ApartEntity.class);
+//
+//                    apartRepository.save(apartListEntity);
+//                }
             }
         }
     }
@@ -682,9 +641,11 @@ public class FgmService {
         for (ApartEntity apartEntity : apartList) {
             JSONObject obj = new JSONObject();
 
-            obj.put("apartCode"   , apartEntity.getApartCode());
+            obj.put("seq"         , apartEntity.getSeq());
             obj.put("apartName"   , apartEntity.getApartName());
-            obj.put("apartAddress", apartEntity.getApartAddress());
+            obj.put("apartDong"   , apartEntity.getApartDong());
+            obj.put("address"     , apartEntity.getAddress());
+            obj.put("apartStreet" , apartEntity.getApartStreet());
             obj.put("convX"       , apartEntity.getConvX());
             obj.put("convY"       , apartEntity.getConvY());
             obj.put("lawdCd"      , apartEntity.getLawdCd());
