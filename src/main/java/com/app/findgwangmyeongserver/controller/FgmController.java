@@ -22,7 +22,6 @@ public class FgmController {
 
     private final FgmService fgmService;
     private final FileService fileService;
-    private final LocalDateTime now = LocalDateTime.now();
 
     @GetMapping(value="{lawdDir}/{type}/file")
     public ResponseEntity<Resource> getFileTradeData(
@@ -45,9 +44,8 @@ public class FgmController {
             @RequestParam("year") String year
     ) throws IOException {
         List<Map<String, Object>> fileList = new ArrayList<>();
-        int monthValue = now.getMonthValue();
 
-        for (int num = 1; num <= monthValue; num++) {
+        for (int num = 1; num <= 12; num++) {
             Map<String, Object> fileInfo = new HashMap<>();
 
             String month = String.valueOf(num < 10 ? "0" + num : num);
@@ -99,9 +97,8 @@ public class FgmController {
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
         boolean isUpdate = false;
-        int monthValue = now.getMonthValue();
 
-        for (int month = 1; month <= monthValue; month++) {
+        for (int month = 1; month <= 12; month++) {
             int result = fgmService.saveLatestTradeData(lawdCd, type, year, String.valueOf(month < 10 ? "0" + month : month));
 
             if (!isUpdate && result > 1) isUpdate = true;

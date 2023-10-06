@@ -232,32 +232,34 @@ public class FgmService {
             //총 매매 거래내역 수(최신)
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
-            //현재까지 기록된 거래내역 수
-            long count = "deal".equals(type) ? tradeRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month) :
-                                                tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
-            int currentCount = Optional.of(count).orElse(0L).intValue();
+            if (totalCount > 0) {
+                //현재까지 기록된 거래내역 수
+                long count = "deal".equals(type) ? tradeRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month) :
+                                                    tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
+                int currentCount = Optional.of(count).orElse(0L).intValue();
 
-            //2) 데이터 변경이 있는 경우 저장
-            if (totalCount != currentCount) {
-                ResponseDTO response = callOpenApi(type, lawdCd, 1, totalCount, deelYmd);
+                //2) 데이터 변경이 있는 경우 저장
+                if (totalCount != currentCount) {
+                    ResponseDTO response = callOpenApi(type, lawdCd, 1, totalCount, deelYmd);
 
-                if ("OK".equals(response.getMessage())) {
-                    body = response.getBody();
-                    Element items = body.getChild("items");
-                    List<Element> itemList = items.getChildren("item");
+                    if ("OK".equals(response.getMessage())) {
+                        body = response.getBody();
+                        Element items = body.getChild("items");
+                        List<Element> itemList = items.getChildren("item");
 
-                    if ("deal".equals(type)) {
-                        tradeRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
+                        if ("deal".equals(type)) {
+                            tradeRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
 
-                        saveTradeDeal(itemList);
-                    } else {
-                        tradeRentRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
+                            saveTradeDeal(itemList);
+                        } else {
+                            tradeRentRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
 
-                        saveTradeRent(itemList);
+                            saveTradeRent(itemList);
+                        }
                     }
-                }
 
-                result = 1;
+                    result = 1;
+                }
             }
         }
 
