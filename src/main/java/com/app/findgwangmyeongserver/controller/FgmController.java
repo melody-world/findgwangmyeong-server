@@ -160,22 +160,41 @@ public class FgmController {
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
         fgmService.saveApart(lawdCd);
+        fgmService.saveApartConv(lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
     }
 
     /**
-     * 아파트 주소로 좌표 획득
+     * 시군구 아파트 목록 조회 후 저장
      * @param lawdCd
      * @return
      * @throws Exception
      */
-    @PostMapping(value="/apart/conv")
-    public ResponseEntity<MsgEntity> saveApartConv(
+    @PostMapping(value="/apart/code")
+    public ResponseEntity<MsgEntity> saveApartCode(
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.saveApartConv(lawdCd);
+        fgmService.saveApartCode(lawdCd);
+        fgmService.saveApartAddress(lawdCd);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
+    /**
+     * 시군구 아파트 목록 조회 후 저장
+     * @param lawdCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/apart/compare")
+    public ResponseEntity<MsgEntity> saveApartCompare(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    ) throws Exception {
+        fgmService.saveApartCompare1(lawdCd);
+        fgmService.saveApartCompare2(lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));

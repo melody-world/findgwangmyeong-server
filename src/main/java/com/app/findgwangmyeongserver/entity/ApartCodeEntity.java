@@ -10,22 +10,15 @@ import javax.persistence.*;
 @Data
 @Builder
 @Entity
-@Table(name="APART_LIST")
+@Table(name="APART_CODE")
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApartEntity {
+public class ApartCodeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long seq;
+    private String apartCode;
 
     private String apartName;
-    private String apartDong;
     private String address;
-    @Column(name="CONV_X")
-    private double convX;
-    @Column(name="CONV_Y")
-    private double convY;
     private String lawdCd;
-    private String apartCode;
 }

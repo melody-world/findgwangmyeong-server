@@ -1,5 +1,7 @@
 package com.app.findgwangmyeongserver.repo;
 
+import com.app.findgwangmyeongserver.dto.inter.Apart;
+import com.app.findgwangmyeongserver.dto.inter.ApartCode;
 import com.app.findgwangmyeongserver.entity.TradeEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,16 +27,54 @@ public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
         ", MAX(ti.apart_street) AS apartStreet " +
         ", MAX(ti.lawd_cd) AS lawdCd " +
         "from trade_info ti " +
-        "where ti.lawd_cd = '41210' " +
+        "where ti.lawd_cd = :lawdCd " +
         "group by ti.apart_name, ti.apart_dong", nativeQuery = true)
     public List<Apart> findByLawdCd(@Param("lawdCd") String lawdCd);
 
-    interface Apart {
-        String getApartName();
-        String getApartDong();
-        String getApartStreet();
-        String getAddress();
-        String getLawdCd();
-    }
+    @Query(value =
+        "select x.seq AS seq " +
+        "     , x.apart_code AS apartCode " +
+        " from ( " +
+        "       select al.seq " +
+        "            , ac.apart_code " +
+        "         from apart_list al " +
+        "              left outer join apart_code ac " +
+        "                on ac.lawd_cd = al.lawd_cd " +
+        "               and ac.address like concat('%', al.apart_dong, ' ', al.address, '%')" +
+        "       where al.lawd_cd = :lawdCd " +
+        "     ) x " +
+        "where x.apart_code is not null", nativeQuery = true)
+    public List<ApartCode> findByLawdCd2(@Param("lawdCd") String lawdCd);
+
+    @Query(value =
+        "select x.seq AS seq " +
+        "     , x.apart_code AS apartCode " +
+        "  from ( " +
+        "        select al.seq " +
+        "             , ac.apart_code " +
+        "          from apart_list al " +
+        "               inner join " +
+        "               ( " +
+        "                select x.seq " +
+        "                  from ( " +
+        "                        select al.seq " +
+        "                             , ac.apart_code " +
+        "                          from apart_list al " +
+        "                               left outer join apart_code ac " +
+        "                                 on ac.lawd_cd = al.lawd_cd " +
+        "                                and ac.address like concat('%', al.apart_dong, ' ', al.address, '%')" +
+        "                         where al.lawd_cd = :lawdCd " +
+        "                        ) x " +
+        "                  where x.apart_code is null " +
+        "               ) tmp " +
+        "              on al.seq = tmp.seq " +
+        "              left outer join apart_code ac " +
+        "                on ac.lawd_cd = al.lawd_cd " +
+        "               and ac.apart_name like concat('%', al.apart_name, '%') " +
+        "        where al.lawd_cd = :lawdCd " +
+        "       ) x" +
+        " where x.apart_code is not null ", nativeQuery = true)
+    public List<ApartCode> findByLawdCd3(@Param("lawdCd") String lawdCd);
+
 
 }

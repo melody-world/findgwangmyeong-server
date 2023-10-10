@@ -11,4 +11,6 @@ public interface ApartRepository extends JpaRepository<ApartEntity, String> {
 
     List<ApartEntity> findByLawdCd(String lawdCd);
 
+    ApartEntity findBySeq(long seq);
+
 }
