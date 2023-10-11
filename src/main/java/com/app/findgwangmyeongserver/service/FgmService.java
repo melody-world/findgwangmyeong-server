@@ -39,10 +39,10 @@ public class FgmService {
     @Value("${openapi.rent.url}")
     private String API_RENT_URL;
 
-    @Value("${openapi.apartList.url}")
+    @Value("${openapi.apart.list.url}")
     private String API_APART_LIST_URL;
 
-    @Value("${openapi.apartInfo.url}")
+    @Value("${openapi.apart.info.url}")
     private String API_APART_INFO_URL;
 
     @Value("${naver.geocode.url}")
@@ -260,7 +260,7 @@ public class FgmService {
                         }
                     }
 
-                    result = 1;
+                    result++;
                 }
             }
         }
@@ -565,7 +565,7 @@ public class FgmService {
         sb.append("?serviceKey=" + SERVICE_KEY);
         sb.append("&sigunguCode=" + lawdCd);
         sb.append("&pageNo=1");
-        sb.append("&numOfRows=999999");
+        sb.append("&numOfRows=100");
 
         URL url = new URL(sb.toString());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -736,6 +736,7 @@ public class FgmService {
             obj.put("convX"       , apartEntity.getConvX());
             obj.put("convY"       , apartEntity.getConvY());
             obj.put("lawdCd"      , apartEntity.getLawdCd());
+            obj.put("apartCode"   , apartEntity.getApartCode());
 
             jsonArray.add(obj);
         }

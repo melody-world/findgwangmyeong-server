@@ -101,7 +101,7 @@ public class FgmController {
         for (int month = 1; month <= 12; month++) {
             int result = fgmService.saveLatestTradeData(lawdCd, type, year, String.valueOf(month < 10 ? "0" + month : month));
 
-            if (!isUpdate && result > 1) isUpdate = true;
+            if (result > 0) isUpdate = true;
         }
 
         return ResponseEntity.ok()
