@@ -24,7 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,17 +56,10 @@ public class FgmService {
     @Value("${openapi.service.key}")
     private String SERVICE_KEY;
 
-    @Value("${openapi.geom.key}")
-    private String GEOM_API_KEY;
-
-    @Value("${openapi.geom.url}")
-    private String GEOM_API_URL;
-
     private final TradeRepository tradeRepository;
     private final TradeRentRepository tradeRentRepository;
     private final ApartRepository apartRepository;
     private final ApartCodeRepository apartCodeRepository;
-    private final GeomRepository geomRepository;
     private final GeomColorRepository geomColorRepository;
     private final LawdRepository lawdRepository;
 
@@ -392,62 +384,6 @@ public class FgmService {
         }
     }
 
-    public void saveGeom() throws Exception {
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.getForEntity(GEOM_API_URL + "?apikey=" + GEOM_API_KEY, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            JSONParser jsonParser = new JSONParser();
-            JSONArray jsonArray = (JSONArray) jsonParser.parse(response.getBody());
-
-            geomRepository.deleteAll();
-
-            for (Object obj : jsonArray) {
-                JSONObject json = (JSONObject) obj;
-                log.info("info : {}", json);
-
-                geomRepository.save(GeomEntity.builder()
-                        .lineNm(String.valueOf(json.get("lineNm")))
-                        .convX(Double.valueOf(String.valueOf(json.get("convX"))).doubleValue())
-                        .convY(Double.valueOf(String.valueOf(json.get("convY"))).doubleValue())
-                        .stnKrNm(String.valueOf(json.get("stnKrNm")))
-                        .outStnNum(String.valueOf(json.get("outStnNum")))
-                        .build());
-            }
-        }
-    }
-
-    public String geomInfo(String name) {
-        List<String> nameList = new ArrayList<>();
-        String[] nameArray = name.split(",");
-
-        for (String stn : nameArray) {
-            nameList.add(stn);
-        }
-
-        List<GeomEntity> geomList = geomRepository.findByStnKrNmIn(nameList);
-
-        if (CollectionUtils.isEmpty(geomList)) return "";
-
-        JSONObject obj = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        for (GeomEntity geomEntity : geomList) {
-            JSONObject tradeObj = new JSONObject();
-
-            tradeObj.put("lineNm" , geomEntity.getLineNm());
-            tradeObj.put("stnKrNm", geomEntity.getStnKrNm());
-            tradeObj.put("convX"  , geomEntity.getConvX());
-            tradeObj.put("convY"  , geomEntity.getConvY());
-
-            array.add(tradeObj);
-        }
-
-        obj.put("data", array);
-
-        return obj.toString();
-    }
-
     public String lawdList() {
         List<LawdEntity> lawdList = lawdRepository.findAll();
         List<GeomColorEntity> geomList = geomColorRepository.findAll();
@@ -476,30 +412,6 @@ public class FgmService {
 
         obj.put("data"    , lawdArray);
         obj.put("geomList", geomArray);
-
-        return obj.toString();
-    }
-
-    public String getGeomInfoToLawd(String lawdName) {
-        List<GeomEntity> geomList = geomRepository.findByOutStnNum(lawdName);
-
-        if (CollectionUtils.isEmpty(geomList)) return "";
-
-        JSONObject obj = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        for (GeomEntity geomEntity : geomList) {
-            JSONObject tradeObj = new JSONObject();
-
-            tradeObj.put("lineNm" , geomEntity.getLineNm());
-            tradeObj.put("stnKrNm", geomEntity.getStnKrNm());
-            tradeObj.put("convX"  , geomEntity.getConvX());
-            tradeObj.put("convY"  , geomEntity.getConvY());
-
-            array.add(tradeObj);
-        }
-
-        obj.put("data", array);
 
         return obj.toString();
     }
@@ -690,7 +602,7 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartCompare1(String lawdCd) {
+    public void saveApartCompare1(String lawdCd) throws Exception {
         /**
          * 아파트 리스트와 거래 내역의 아파트들을 그룹화해 주소를 대조한다.
          */
@@ -705,7 +617,7 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartCompare2(String lawdCd) {
+    public void saveApartCompare2(String lawdCd) throws Exception {
         /**
          * 주소를 포함한 아파트를 조회했을 때 아파트코드가 없는 경우
          * 아파트명으로 다시 비교해본다

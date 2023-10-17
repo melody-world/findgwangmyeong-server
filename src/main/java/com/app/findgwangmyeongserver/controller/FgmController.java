@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -108,26 +107,6 @@ public class FgmController {
                 .body(new MsgEntity("OK", isUpdate ? "Data has been updated" : "No data changed"));
     }
 
-    @PostMapping(value="/geom")
-    public ResponseEntity<MsgEntity> saveGeom() throws Exception {
-        fgmService.saveGeom();
-
-        return ResponseEntity.ok()
-                .body(new MsgEntity("OK", ""));
-    }
-
-    @GetMapping(value="{lawdDir}/geom/file")
-    public ResponseEntity<Resource> getFileGeomDataToName(
-            @PathVariable("lawdDir") String lawdDir,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
-            @RequestParam("name") String name
-    ) {
-        String fileName = "geom.json";
-        String tradeInfo = fgmService.geomInfo(name);
-
-        return fileService.getDataFile(lawdDir, lawdCd, "", fileName, tradeInfo);
-    }
-
     @GetMapping(value="{lawdDir}/file/lawd")
     public ResponseEntity<Resource> getLawdFile(
             @PathVariable("lawdDir") String lawdDir
@@ -136,17 +115,6 @@ public class FgmController {
         String lawdInfo = fgmService.lawdList();
 
         return fileService.getDataFile(lawdDir, "", "", fileName, lawdInfo);
-    }
-
-    @GetMapping(value="{lawdDir}/geom/lawd/file")
-    public ResponseEntity<Resource> getLawdFileGeomDataToLawd(
-            @PathVariable(value = "lawdDir") String lawdDir,
-            @RequestParam(value = "lawdName") String lawdName
-    ) {
-        String fileName = "geom.json";
-        String tradeInfo = fgmService.getGeomInfoToLawd(lawdName);
-
-        return fileService.getDataFile(lawdDir, "", "", fileName, tradeInfo);
     }
 
     /**
@@ -184,7 +152,7 @@ public class FgmController {
     }
 
     /**
-     * 시군구 아파트 목록 조회 후 저장
+     * 데이터 비교 - 거래 내역 아파트 리스트 : 아파트 목록
      * @param lawdCd
      * @return
      * @throws Exception
