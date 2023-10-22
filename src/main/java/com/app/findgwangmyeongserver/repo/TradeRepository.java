@@ -24,7 +24,6 @@ public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
         "  ti.apart_name AS apartName " +
         ", ti.apart_dong AS apartDong " +
         ", MAX(ti.address) AS address " +
-        ", MAX(ti.apart_street) AS apartStreet " +
         ", MAX(ti.lawd_cd) AS lawdCd " +
         "from trade_info ti " +
         "where ti.lawd_cd = :lawdCd " +
