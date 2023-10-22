@@ -118,6 +118,35 @@ public class FgmController {
     }
 
     /**
+     * 시작연도와 종료연도를 받아 매매,전월세 데이터를 정리
+     * @param lawdCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/data")
+    public ResponseEntity<MsgEntity> saveTrade(
+            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
+            @RequestParam(value = "fromYear") String fromYear,
+            @RequestParam(value = "toYear") String toYear
+    ) throws Exception {
+        int start = Integer.parseInt(fromYear);
+        int end = Integer.parseInt(toYear);
+
+        for (int year = start; year <= end; year++) {
+            for (int month = 1; month <= 12; month++) {
+                int result = fgmService.saveLatestTradeData(lawdCd, "deal", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month));
+            }
+
+            for (int month = 1; month <= 12; month++) {
+                int result = fgmService.saveLatestTradeData(lawdCd, "rent", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month));
+            }
+        }
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
+    /**
      * 거래 내역을 조회해 아파트 리스트 정리
      * @param lawdCd
      * @return

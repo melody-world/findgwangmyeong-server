@@ -20,14 +20,30 @@ public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
     public void deleteByLawdCdAndYearAndMonth(String lawdCd, String year, String month);
 
     @Query(value =
-        "select " +
-        "  ti.apart_name AS apartName " +
-        ", ti.apart_dong AS apartDong " +
-        ", MAX(ti.address) AS address " +
-        ", MAX(ti.lawd_cd) AS lawdCd " +
-        "from trade_info ti " +
-        "where ti.lawd_cd = :lawdCd " +
-        "group by ti.apart_name, ti.apart_dong", nativeQuery = true)
+        "select distinct " +
+        "      x.apartName " +
+        "    , x.apartDong " +
+        "    , x.address " +
+        "    , x.lawdCd " +
+        " from ( " +
+        "       select " +
+        "             ti.apart_name AS apartName " +
+        "           , ti.apart_dong AS apartDong " +
+        "           , MAX(ti.address) AS address " +
+        "           , MAX(ti.lawd_cd) AS lawdCd " +
+        "       from trade_info ti " +
+        "       where ti.lawd_cd = :lawdCd " +
+        "       group by ti.apart_name, ti.apart_dong" +
+        "       union all " +
+        "       select " +
+        "             ti.apart_name AS apartName " +
+        "           , ti.apart_dong AS apartDong " +
+        "           , MAX(ti.address) AS address " +
+        "           , MAX(ti.lawd_cd) AS lawdCd " +
+        "       from trade_rent_info ti " +
+        "       where ti.lawd_cd = :lawdCd " +
+        "      group by ti.apart_name, ti.apart_dong " +
+        "       ) x ", nativeQuery = true)
     public List<Apart> findByLawdCd(@Param("lawdCd") String lawdCd);
 
     @Query(value =
