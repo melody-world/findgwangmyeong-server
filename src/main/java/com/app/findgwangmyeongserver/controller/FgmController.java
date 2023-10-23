@@ -69,9 +69,9 @@ public class FgmController {
              @PathVariable("lawdDir") String lawdDir
     ) {
         String fileName = "subway.json";
-        String subwayList = fgmService.subwayList();
+        String lawdList = fgmService.lawdList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, subwayList);
+        return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
     }
 
     /**

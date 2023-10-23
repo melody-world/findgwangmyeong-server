@@ -292,11 +292,22 @@ public class FgmService {
         }
     }
 
-    public String subwayList() {
+    public String lawdList() {
+        List<LawdEntity> lawdList = lawdRepository.findAll();
         List<GeomColorEntity> geomList = geomColorRepository.findAll();
 
-        JSONObject jsonObject = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
+        JSONObject obj = new JSONObject();
+        JSONArray lawdArray = new JSONArray();
+        JSONArray geomArray = new JSONArray();
+
+        for (LawdEntity lawdEntity : lawdList) {
+            JSONObject lawdObj = new JSONObject();
+
+            lawdObj.put("lawdCd", lawdEntity.getLawdCd());
+            lawdObj.put("lawdNm", lawdEntity.getLawdNm());
+
+            lawdArray.add(lawdObj);
+        }
 
         for (GeomColorEntity geomColorEntity : geomList) {
             JSONObject lawdObj = new JSONObject();
@@ -304,12 +315,13 @@ public class FgmService {
             lawdObj.put("lineNm"    , geomColorEntity.getLineNm());
             lawdObj.put("colorValue", geomColorEntity.getColorValue());
 
-            jsonArray.add(lawdObj);
+            geomArray.add(lawdObj);
         }
 
-        jsonObject.put("data", jsonArray);
+        obj.put("data"    , lawdArray);
+        obj.put("geomList", geomArray);
 
-        return jsonObject.toString();
+        return obj.toString();
     }
 
     @Transactional
