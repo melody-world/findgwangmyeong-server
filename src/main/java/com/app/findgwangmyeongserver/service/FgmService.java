@@ -115,98 +115,6 @@ public class FgmService {
                 .body(body).build();
     }
 
-    public String getTradeInfo(
-            String lawdCd,
-            String type,
-            String year,
-            String month
-    ) {
-        return "deal".equals(type) ? getTradeListToString(lawdCd, year, month)
-                                    : getTradeRentListToString(lawdCd, year, month);
-    }
-
-    private String getTradeListToString(
-            String lawdCd,
-            String year,
-            String month
-    ) {
-        List<TradeEntity> tradeList = tradeRepository.findByLawdCdAndYearAndMonth(lawdCd, year, month);
-
-        if (CollectionUtils.isEmpty(tradeList)) return "";
-
-        JSONObject obj = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        for (TradeEntity tradeInfo : tradeList) {
-            JSONObject tradeObj = new JSONObject();
-
-            tradeObj.put("tradeSeq"   , tradeInfo.getTradeSeq());
-            tradeObj.put("year"       , tradeInfo.getYear());
-            tradeObj.put("month"      , tradeInfo.getMonth());
-            tradeObj.put("day"        , tradeInfo.getDay());
-            tradeObj.put("apartName"  , tradeInfo.getApartName());
-            tradeObj.put("apartArea"  , tradeInfo.getApartArea());
-            tradeObj.put("apartFloor" , tradeInfo.getApartFloor());
-            tradeObj.put("tradeMoney" , tradeInfo.getTradeMoney());
-            tradeObj.put("tradeType"  , tradeInfo.getTradeType());
-            tradeObj.put("lawdCd"     , tradeInfo.getLawdCd());
-            tradeObj.put("apartDong"  , tradeInfo.getApartDong());
-            tradeObj.put("apartStreet", tradeInfo.getApartStreet());
-            tradeObj.put("address"    , tradeInfo.getAddress());
-            tradeObj.put("confirmYmd"  , tradeInfo.getConfirmYmd());
-
-            array.add(tradeObj);
-        }
-
-        obj.put("tradeYm"   , year + month);
-        obj.put("totalCount", tradeList.size());
-        obj.put("data"      , array);
-
-        return obj.toString();
-    }
-
-    private String getTradeRentListToString(
-            String lawdCd,
-            String year,
-            String month
-    ) {
-        List<TradeRentEntity> tradeRentList = tradeRentRepository.findByLawdCdAndYearAndMonth(lawdCd, year, month);
-
-        if (CollectionUtils.isEmpty(tradeRentList)) return "";
-
-        JSONObject obj = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        for (TradeRentEntity tradeInfo : tradeRentList) {
-            JSONObject tradeObj = new JSONObject();
-
-            tradeObj.put("tradeSeq"    , tradeInfo.getTradeSeq());
-            tradeObj.put("year"        , tradeInfo.getYear());
-            tradeObj.put("month"       , tradeInfo.getMonth());
-            tradeObj.put("day"         , tradeInfo.getDay());
-            tradeObj.put("apartName"   , tradeInfo.getApartName());
-            tradeObj.put("apartArea"   , tradeInfo.getApartArea());
-            tradeObj.put("apartFloor"  , tradeInfo.getApartFloor());
-            tradeObj.put("tradeMoney"  , tradeInfo.getTradeMoney());
-            tradeObj.put("rentMoney"   , tradeInfo.getRentMoney());
-            tradeObj.put("bfTradeMoney", tradeInfo.getBfTradeMoney());
-            tradeObj.put("bfRentMoney" , tradeInfo.getBfRentMoney());
-            tradeObj.put("tradeType"   , tradeInfo.getTradeType());
-            tradeObj.put("rentDate"    , tradeInfo.getRentDate());
-            tradeObj.put("lawdCd"      , tradeInfo.getLawdCd());
-            tradeObj.put("apartDong"   , tradeInfo.getApartDong());
-            tradeObj.put("address"     , tradeInfo.getAddress());
-
-            array.add(tradeObj);
-        }
-
-        obj.put("tradeYm"   , year + month);
-        obj.put("totalCount", tradeRentList.size());
-        obj.put("data"      , array);
-
-        return obj.toString();
-    }
-
     @Transactional
     public int saveLatestTradeData(
             String lawdCd,
@@ -384,22 +292,11 @@ public class FgmService {
         }
     }
 
-    public String lawdList() {
-        List<LawdEntity> lawdList = lawdRepository.findAll();
+    public String subwayList() {
         List<GeomColorEntity> geomList = geomColorRepository.findAll();
 
-        JSONObject obj = new JSONObject();
-        JSONArray lawdArray = new JSONArray();
-        JSONArray geomArray = new JSONArray();
-
-        for (LawdEntity lawdEntity : lawdList) {
-            JSONObject lawdObj = new JSONObject();
-
-            lawdObj.put("lawdCd", lawdEntity.getLawdCd());
-            lawdObj.put("lawdNm", lawdEntity.getLawdNm());
-
-            lawdArray.add(lawdObj);
-        }
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
 
         for (GeomColorEntity geomColorEntity : geomList) {
             JSONObject lawdObj = new JSONObject();
@@ -407,13 +304,12 @@ public class FgmService {
             lawdObj.put("lineNm"    , geomColorEntity.getLineNm());
             lawdObj.put("colorValue", geomColorEntity.getColorValue());
 
-            geomArray.add(lawdObj);
+            jsonArray.add(lawdObj);
         }
 
-        obj.put("data"    , lawdArray);
-        obj.put("geomList", geomArray);
+        jsonObject.put("data", jsonArray);
 
-        return obj.toString();
+        return jsonObject.toString();
     }
 
     @Transactional

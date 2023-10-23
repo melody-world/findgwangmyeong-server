@@ -8,12 +8,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequestMapping("trade")
 @RequiredArgsConstructor
@@ -21,43 +15,6 @@ public class FgmController {
 
     private final FgmService fgmService;
     private final FileService fileService;
-
-    @GetMapping(value="{lawdDir}/{type}/file")
-    public ResponseEntity<Resource> getFileTradeData(
-            @PathVariable("lawdDir") String lawdDir,
-            @PathVariable("type") String type,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
-            @RequestParam("year") String year,
-            @RequestParam("month") String month
-    ) {
-        String fileName = year + "-" + month + ".json";
-        String tradeInfo = fgmService.getTradeInfo(lawdCd, type, year, month);
-
-        return fileService.getDataFile(lawdDir, lawdCd, type, fileName, tradeInfo);
-    }
-
-    @GetMapping(value="{type}/file/cond")
-    public void getFileTradeDataYear(
-            @PathVariable("type") String type,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd,
-            @RequestParam("year") String year
-    ) throws IOException {
-        List<Map<String, Object>> fileList = new ArrayList<>();
-
-        for (int num = 1; num <= 12; num++) {
-            Map<String, Object> fileInfo = new HashMap<>();
-
-            String month = String.valueOf(num < 10 ? "0" + num : num);
-            String fileName = year + "-" + month + ".json";
-            String tradeInfo = fgmService.getTradeInfo(lawdCd, type, year, month);
-
-            fileInfo.put("fileName" , fileName);
-            fileInfo.put("tradeInfo", tradeInfo);
-            fileList.add(fileInfo);
-        }
-
-        fileService.makeDataFile(lawdCd, type, fileList);
-    }
 
     /**
      * 광명찾자_아파트 거래내역 최신화
@@ -107,14 +64,14 @@ public class FgmController {
                 .body(new MsgEntity("OK", isUpdate ? "Data has been updated" : "No data changed"));
     }
 
-    @GetMapping(value="{lawdDir}/file/lawd")
-    public ResponseEntity<Resource> getLawdFile(
-            @PathVariable("lawdDir") String lawdDir
+    @GetMapping(value="/subway/{lawdDir}/file")
+    public ResponseEntity<Resource> getSubwayFile(
+             @PathVariable("lawdDir") String lawdDir
     ) {
-        String fileName = "lawd.json";
-        String lawdInfo = fgmService.lawdList();
+        String fileName = "subway.json";
+        String subwayList = fgmService.subwayList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, lawdInfo);
+        return fileService.getDataFile(lawdDir, "", "", fileName, subwayList);
     }
 
     /**
