@@ -26,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -326,8 +327,6 @@ public class FgmService {
 
     @Transactional
     public void saveApart(String lawdCd) throws Exception {
-        apartRepository.deleteAll();
-
         List<Apart> apartList = tradeRepository.findByLawdCd(lawdCd);
 
         for (Apart apart : apartList) {
@@ -343,6 +342,9 @@ public class FgmService {
     @Transactional
     public void saveApartConv(String lawdCd) throws Exception {
         List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
+        apartList = apartList.stream()
+                        .filter(a -> a.getConvX() == 0 || a.getConvY() ==0)
+                        .collect(Collectors.toList());
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();

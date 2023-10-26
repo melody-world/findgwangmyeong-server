@@ -43,7 +43,11 @@ public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
         "       from trade_rent_info ti " +
         "       where ti.lawd_cd = :lawdCd " +
         "      group by ti.apart_name, ti.apart_dong " +
-        "       ) x ", nativeQuery = true)
+        "       ) x left outer join apart_list y " +
+        "      on x.apartName = y.apart_name " +
+        "     and x.apartDong = y.apart_dong " +
+        "     and y.lawd_cd = :lawdCd " +
+        " where y.apart_name is null ", nativeQuery = true)
     public List<Apart> findByLawdCd(@Param("lawdCd") String lawdCd);
 
     @Query(value =
