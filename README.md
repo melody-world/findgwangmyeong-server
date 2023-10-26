@@ -99,3 +99,25 @@
 |이름|설명|
 |-----|---|
 |lawdCd|지역코드|
+
+
+
+> ### ✔ 중복 데이터 체크(경도,위도)
+```
+SELECT A.*
+  FROM APART_LIST A
+       INNER JOIN 
+       (
+		SELECT APART_DONG
+			 , ADDRESS
+			 , CONV_X
+			 , COUNT(APART_NAME)
+			 , MAX(APART_NAME)
+		  FROM APART_LIST
+		 WHERE LAWD_CD = '41210'
+		 GROUP BY APART_DONG, ADDRESS, CONV_X
+		 HAVING COUNT(APART_NAME) > 1
+		) B
+        ON A.APART_DONG = B.APART_DONG
+       AND A.ADDRESS    = B.ADDRESS
+```
