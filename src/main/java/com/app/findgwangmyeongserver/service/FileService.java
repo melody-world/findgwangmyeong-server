@@ -40,8 +40,8 @@ public class FileService {
 
         if (!"".equals(lawdCd)) {
             uploadPath = "".equals(type)
-                            ? UPLOAD_FILE_DIR + "/" + lawdCd
-                            : UPLOAD_FILE_DIR + "/" + lawdCd + "/" + type;
+                            ? uploadPath + "/" + lawdCd
+                            : uploadPath + "/" + lawdCd + "/" + type;
         }
 
         String uploadFile = uploadPath + "/" + fileName;

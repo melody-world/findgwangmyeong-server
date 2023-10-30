@@ -64,11 +64,21 @@ public class FgmController {
                 .body(new MsgEntity("OK", isUpdate ? "Data has been updated" : "No data changed"));
     }
 
-    @GetMapping(value="/subway/{lawdDir}/file")
-    public ResponseEntity<Resource> getSubwayFile(
+    @GetMapping(value="/master/{lawdDir}/file")
+    public ResponseEntity<Resource> getMasterFile(
              @PathVariable("lawdDir") String lawdDir
     ) {
-        String fileName = "subway.json";
+        String fileName = "master.json";
+        String lawdList = fgmService.masterList();
+
+        return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
+    }
+
+    @GetMapping(value="/lawd/{lawdDir}/file")
+    public ResponseEntity<Resource> getLawdFile(
+             @PathVariable("lawdDir") String lawdDir
+    ) {
+        String fileName = "lawd.json";
         String lawdList = fgmService.lawdList();
 
         return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
@@ -167,7 +177,7 @@ public class FgmController {
         String fileName = "apart.json";
         String lawdInfo = fgmService.getApartList(lawdCd);
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, lawdInfo);
+        return fileService.getDataFile(lawdDir, lawdCd, "", fileName, lawdInfo);
     }
 
 }

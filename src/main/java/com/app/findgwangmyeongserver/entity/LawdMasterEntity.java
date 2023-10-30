@@ -10,15 +10,14 @@ import javax.persistence.*;
 @Data
 @Builder
 @Entity
-@Table(name="LAWD_INFO")
+@Table(name="LAWD_MASTER")
 @NoArgsConstructor
 @AllArgsConstructor
-public class LawdEntity {
+public class LawdMasterEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String lawdCd;
-    private String lawdNm;
     private String masterCd;
+    private String lawdNm;
 
 }

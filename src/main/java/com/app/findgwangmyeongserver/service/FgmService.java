@@ -62,6 +62,7 @@ public class FgmService {
     private final ApartRepository apartRepository;
     private final ApartCodeRepository apartCodeRepository;
     private final GeomColorRepository geomColorRepository;
+    private final LawdMasterRepository lawdMasterRepository;
     private final LawdRepository lawdRepository;
 
     private static String nullToStr(Object str, String strDefault) {
@@ -293,6 +294,26 @@ public class FgmService {
         }
     }
 
+    public String masterList() {
+        List<LawdMasterEntity> masterList = lawdMasterRepository.findAll();
+
+        JSONObject obj = new JSONObject();
+        JSONArray lawdArray = new JSONArray();
+
+        for (LawdMasterEntity lawdEntity : masterList) {
+            JSONObject lawdObj = new JSONObject();
+
+            lawdObj.put("masterCd", lawdEntity.getMasterCd());
+            lawdObj.put("lawdNm"  , lawdEntity.getLawdNm());
+
+            lawdArray.add(lawdObj);
+        }
+
+        obj.put("data", lawdArray);
+
+        return obj.toString();
+    }
+
     public String lawdList() {
         List<LawdEntity> lawdList = lawdRepository.findAll();
         List<GeomColorEntity> geomList = geomColorRepository.findAll();
@@ -304,8 +325,9 @@ public class FgmService {
         for (LawdEntity lawdEntity : lawdList) {
             JSONObject lawdObj = new JSONObject();
 
-            lawdObj.put("lawdCd", lawdEntity.getLawdCd());
-            lawdObj.put("lawdNm", lawdEntity.getLawdNm());
+            lawdObj.put("lawdCd"  , lawdEntity.getLawdCd());
+            lawdObj.put("lawdNm"  , lawdEntity.getLawdNm());
+            lawdObj.put("masterCd", lawdEntity.getMasterCd());
 
             lawdArray.add(lawdObj);
         }
