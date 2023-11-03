@@ -20,5 +20,6 @@ public class LawdEntity {
     private String lawdCd;
     private String lawdNm;
     private String masterCd;
+    private String activeYn;
 
 }

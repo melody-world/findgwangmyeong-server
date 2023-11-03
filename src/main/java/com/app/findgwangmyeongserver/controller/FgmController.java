@@ -68,10 +68,10 @@ public class FgmController {
     public ResponseEntity<Resource> getMasterFile(
              @PathVariable("lawdDir") String lawdDir
     ) {
-        String fileName = "master.json";
-        String lawdList = fgmService.masterList();
+        String fileName   = "master.json";
+        String masterList = fgmService.masterList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
+        return fileService.getDataFile(lawdDir, "", "", fileName, masterList);
     }
 
     @GetMapping(value="/lawd/{lawdDir}/file")
@@ -82,6 +82,16 @@ public class FgmController {
         String lawdList = fgmService.lawdList();
 
         return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
+    }
+
+    @GetMapping(value="/subway/{lawdDir}/file")
+    public ResponseEntity<Resource> getSubwayFile(
+             @PathVariable("lawdDir") String lawdDir
+    ) {
+        String fileName = "subway.json";
+        String subwayList = fgmService.getSubwayList();
+
+        return fileService.getDataFile(lawdDir, "", "", fileName, subwayList);
     }
 
     /**
