@@ -447,7 +447,7 @@ public class FgmService {
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
             if (totalCount > 0) {
-                apartCodeRepository.deleteAll();
+                apartCodeRepository.deleteByLawdCd(lawdCd);
 
                 List<Element> itemList = items.getChildren("item");
 

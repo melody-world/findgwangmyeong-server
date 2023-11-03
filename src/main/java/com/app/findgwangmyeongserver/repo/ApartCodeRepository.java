@@ -11,4 +11,6 @@ public interface ApartCodeRepository extends JpaRepository<ApartCodeEntity, Stri
 
     List<ApartCodeEntity> findByLawdCd(String lawdCd);
 
+    public void deleteByLawdCd(String lawdCd);
+
 }
