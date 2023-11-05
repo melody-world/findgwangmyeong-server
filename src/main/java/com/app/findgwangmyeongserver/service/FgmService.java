@@ -305,6 +305,7 @@ public class FgmService {
 
             lawdObj.put("masterCd", lawdEntity.getMasterCd());
             lawdObj.put("lawdNm"  , lawdEntity.getLawdNm());
+            lawdObj.put("activeYn", lawdEntity.getActiveYn());
 
             lawdArray.add(lawdObj);
         }
