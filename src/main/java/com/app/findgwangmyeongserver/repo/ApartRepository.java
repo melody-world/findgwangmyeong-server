@@ -9,8 +9,10 @@ import java.util.List;
 @Repository
 public interface ApartRepository extends JpaRepository<ApartEntity, String> {
 
-    List<ApartEntity> findByLawdCd(String lawdCd);
+    public List<ApartEntity> findByLawdCd(String lawdCd);
 
-    ApartEntity findBySeq(long seq);
+    public ApartEntity findBySeq(long seq);
+
+    public void deleteByMasterCd(String masterCd);
 
 }

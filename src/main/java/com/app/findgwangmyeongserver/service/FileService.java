@@ -3,6 +3,9 @@ package com.app.findgwangmyeongserver.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -10,12 +13,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,24 +26,21 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FileService {
 
-    final static String UPLOAD_FILE_DIR = System.getProperty("user.home");
+    private final static String UPLOAD_FILE_DIR = System.getProperty("user.home");
 
     public ResponseEntity<Resource> getDataFile(
-            String lawdDir,
+            String filePath,
             String lawdCd,
-            String type,
             String fileName,
             String fileInfo
     ) {
         if ("".equals(fileInfo))
             return ResponseEntity.ok().body(null);
 
-        String uploadPath = UPLOAD_FILE_DIR + "/" + lawdDir;
+        String uploadPath = UPLOAD_FILE_DIR + "/" + filePath;
 
         if (!"".equals(lawdCd)) {
-            uploadPath = "".equals(type)
-                            ? uploadPath + "/" + lawdCd
-                            : uploadPath + "/" + lawdCd + "/" + type;
+            uploadPath = uploadPath + "/" + lawdCd;
         }
 
         String uploadFile = uploadPath + "/" + fileName;
@@ -51,10 +50,10 @@ public class FileService {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(uploadFile, false))) {
             writer.write(fileInfo);
 
-            Path filePath = Path.of(uploadPath, fileName);
+            Path path = Path.of(uploadPath, fileName);
 
-            if (Files.exists(filePath)) {
-                Resource fileResource = new FileSystemResource(filePath.toFile());
+            if (Files.exists(path)) {
+                Resource fileResource = new FileSystemResource(path.toFile());
 
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
@@ -103,6 +102,29 @@ public class FileService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<String> getApartFileFromJson(
+            String filePath,
+            String masterCd
+    ) throws Exception {
+        List<String> resultList = new ArrayList<>();
+        File dir = new File(UPLOAD_FILE_DIR + "/" + filePath + "/" + masterCd);
+		File[] files = dir.listFiles();
+
+        if (files != null && files.length > 0) {
+            JSONParser parser = new JSONParser();
+
+            for (File file : files) {
+                Reader reader = new FileReader(file.toString() + "/apart.json");
+                JSONObject jsonObject = (JSONObject) parser.parse(reader);
+
+                String data = jsonObject.get("data").toString();
+                resultList.add(data);
+            }
+        }
+
+        return resultList;
     }
 
 }

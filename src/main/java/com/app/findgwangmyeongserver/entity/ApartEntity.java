@@ -28,4 +28,5 @@ public class ApartEntity {
     private double convY;
     private String lawdCd;
     private String apartCode;
+    private String masterCd;
 }

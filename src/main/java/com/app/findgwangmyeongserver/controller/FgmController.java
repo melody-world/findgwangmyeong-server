@@ -8,6 +8,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("trade")
 @RequiredArgsConstructor
@@ -64,34 +66,35 @@ public class FgmController {
                 .body(new MsgEntity("OK", isUpdate ? "Data has been updated" : "No data changed"));
     }
 
-    @GetMapping(value="/master/{lawdDir}/file")
+    @GetMapping(value="/master/{path}/file")
     public ResponseEntity<Resource> getMasterFile(
-             @PathVariable("lawdDir") String lawdDir
+             @PathVariable("path") String path
     ) {
         String fileName   = "master.json";
         String masterList = fgmService.masterList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, masterList);
+        return fileService.getDataFile(path, "", fileName, masterList);
     }
 
-    @GetMapping(value="/lawd/{lawdDir}/file")
+    @GetMapping(value="/lawd/{path}/{masterDir}/file")
     public ResponseEntity<Resource> getLawdFile(
-             @PathVariable("lawdDir") String lawdDir
+            @PathVariable("path") String path,
+            @PathVariable("masterDir") String masterDir
     ) {
         String fileName = "lawd.json";
         String lawdList = fgmService.lawdList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, lawdList);
+        return fileService.getDataFile(path, masterDir, fileName, lawdList);
     }
 
-    @GetMapping(value="/subway/{lawdDir}/file")
+    @GetMapping(value="/subway/{path}/file")
     public ResponseEntity<Resource> getSubwayFile(
-             @PathVariable("lawdDir") String lawdDir
+             @PathVariable("path") String path
     ) {
         String fileName = "subway.json";
         String subwayList = fgmService.getSubwayList();
 
-        return fileService.getDataFile(lawdDir, "", "", fileName, subwayList);
+        return fileService.getDataFile(path, "", fileName, subwayList);
     }
 
     /**
@@ -176,18 +179,39 @@ public class FgmController {
 
     /**
      * 아파트 단지 파일 저장
-     * @param lawdDir
+     * @param path
      * @return
      */
-    @GetMapping(value="/apart/{lawdDir}/file")
+    @GetMapping(value="/apart/{path}/file")
     public ResponseEntity<Resource> getApartListFile(
-            @PathVariable("lawdDir") String lawdDir,
+            @PathVariable("path") String path,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) {
         String fileName = "apart.json";
         String lawdInfo = fgmService.getApartList(lawdCd);
 
-        return fileService.getDataFile(lawdDir, lawdCd, "", fileName, lawdInfo);
+        return fileService.getDataFile(path, lawdCd, fileName, lawdInfo);
     }
+
+    /**
+     * 해당 시/군/구 디렉토리의 아파트 json 파일을 읽어 APART_LIST 데이터 업로드
+     * @param path     - fgm
+     * @param masterCd - 시/군/구코드
+     * @return
+     * @throws Exception
+     */
+    @GetMapping(value="/apart/{path}/upload")
+    public ResponseEntity<MsgEntity> uploadApartList(
+            @PathVariable("path") String path,
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd
+    ) throws Exception {
+        List<String> dataList = fileService.getApartFileFromJson(path, masterCd);
+        fgmService.saveApartList(masterCd, dataList);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", dataList.size()));
+    }
+
+
 
 }

@@ -14,6 +14,7 @@ import org.jdom2.input.SAXBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -609,6 +610,38 @@ public class FgmService {
         jsonObject.put("data", jsonArray);
 
         return jsonObject.toString();
+    }
+
+    @Transactional
+    public void saveApartList(
+            String masterCd,
+            List<String> dataList
+    ) throws Exception {
+        JSONParser jsonParser = new JSONParser();
+
+        if (!CollectionUtils.isEmpty(dataList)) {
+            apartRepository.deleteByMasterCd(masterCd);
+
+            for (String data : dataList) {
+                JSONArray jsonArray = (JSONArray) jsonParser.parse(data);
+
+                for (Object obj : jsonArray) {
+                    JSONObject jsonData = (JSONObject) obj;
+                    ApartEntity apartEntity = ApartEntity.builder()
+                            .seq(Integer.parseInt((String) jsonData.get("seq")))
+                            .apartName(String.valueOf(jsonData.get("apartName")))
+                            .apartDong(String.valueOf(jsonData.get("apartDong")))
+                            .address(String.valueOf(jsonData.get("address")))
+                            .convX(Double.parseDouble(String.valueOf(jsonData.get("convX"))))
+                            .convY(Double.parseDouble(String.valueOf(jsonData.get("convY"))))
+                            .lawdCd(String.valueOf(jsonData.get("lawdCd")))
+                            .apartCode(jsonData.get("apartCode") == null ? "" : String.valueOf(jsonData.get("apartCode")))
+                            .masterCd(masterCd).build();
+
+                    apartRepository.save(apartEntity);
+                }
+            }
+        }
     }
 
 }
