@@ -185,12 +185,13 @@ public class FgmController {
     @GetMapping(value="/apart/{path}/file")
     public ResponseEntity<Resource> getApartListFile(
             @PathVariable("path") String path,
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) {
         String fileName = "apart.json";
         String lawdInfo = fgmService.getApartList(lawdCd);
 
-        return fileService.getDataFile(path, lawdCd, fileName, lawdInfo);
+        return fileService.getDataFile(path, masterCd + "/" + lawdCd, fileName, lawdInfo);
     }
 
     /**
