@@ -19,5 +19,6 @@ public class LawdMasterEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String masterCd;
     private String lawdNm;
+    private String activeYn;
 
 }
