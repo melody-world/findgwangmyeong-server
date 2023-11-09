@@ -15,4 +15,6 @@ public interface ApartRepository extends JpaRepository<ApartEntity, String> {
 
     public void deleteByMasterCd(String masterCd);
 
+    public void deleteByLawdCd(String lawdCd);
+
 }

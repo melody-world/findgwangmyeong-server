@@ -34,7 +34,7 @@ public class FgmController {
             @PathVariable("month") String month,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        int result = fgmService.saveLatestTradeData(lawdCd, type, year, month);
+        int result = fgmService.saveLatestTradeData(lawdCd, type, year, month, false);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", result == 1 ? "Data has been updated" : "No data changed"));
@@ -57,7 +57,7 @@ public class FgmController {
         boolean isUpdate = false;
 
         for (int month = 1; month <= 12; month++) {
-            int result = fgmService.saveLatestTradeData(lawdCd, type, year, String.valueOf(month < 10 ? "0" + month : month));
+            int result = fgmService.saveLatestTradeData(lawdCd, type, year, String.valueOf(month < 10 ? "0" + month : month), false);
 
             if (result > 0) isUpdate = true;
         }
@@ -114,11 +114,11 @@ public class FgmController {
 
         for (int year = start; year <= end; year++) {
             for (int month = 1; month <= 12; month++) {
-                int result = fgmService.saveLatestTradeData(lawdCd, "deal", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month));
+                int result = fgmService.saveLatestTradeData(lawdCd, "deal", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month), true);
             }
 
             for (int month = 1; month <= 12; month++) {
-                int result = fgmService.saveLatestTradeData(lawdCd, "rent", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month));
+                int result = fgmService.saveLatestTradeData(lawdCd, "rent", String.valueOf(year), String.valueOf(month < 10 ? "0" + month : month), true);
             }
         }
 
@@ -132,11 +132,12 @@ public class FgmController {
      * @return
      * @throws Exception
      */
-    @PostMapping(value="/apart")
-    public ResponseEntity<MsgEntity> saveApart(
+    @PostMapping(value="/apart/info")
+    public ResponseEntity<MsgEntity> saveApartInfo(
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) throws Exception {
-        fgmService.saveApart(lawdCd);
+        fgmService.saveApartInfo(masterCd, lawdCd);
         fgmService.saveApartConv(lawdCd);
 
         return ResponseEntity.ok()

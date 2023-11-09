@@ -14,7 +14,6 @@ import org.jdom2.input.SAXBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -123,28 +122,39 @@ public class FgmService {
             String lawdCd,
             String type,
             String year,
-            String month
+            String month,
+            boolean isReset
     ) throws Exception {
         int result = 0;
         String deelYmd = year + month;
 
         ResponseDTO checkResponse = callOpenApi(type, lawdCd,0, 0, deelYmd);
 
-        //1) 최신 데이터 개수 체크
+        //최신 데이터 개수 체크
         if ("OK".equals(checkResponse.getMessage())) {
             Element body = checkResponse.getBody();
 
             //총 매매 거래내역 수(최신)
             int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
+            boolean isSave = false;
 
             if (totalCount > 0) {
-                //현재까지 기록된 거래내역 수
-                long count = "deal".equals(type) ? tradeRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month) :
-                                                    tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
-                int currentCount = Optional.of(count).orElse(0L).intValue();
+                if (isReset) {
+                    isSave = true;
+                } else {
+                    //현재까지 기록된 거래내역 수
+                    long count = "deal".equals(type) ? tradeRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month) :
+                                                        tradeRentRepository.countByLawdCdAndYearAndMonth(lawdCd, year, month);
+                    int currentCount = Optional.of(count).orElse(0L).intValue();
 
-                //2) 데이터 변경이 있는 경우 저장
-                if (totalCount != currentCount) {
+                    //데이터 변경이 있는 경우 저장
+                    if (totalCount != currentCount) {
+                        isSave = true;
+                    }
+                }
+
+
+                if (isSave) {
                     ResponseDTO response = callOpenApi(type, lawdCd, 1, totalCount, deelYmd);
 
                     if ("OK".equals(response.getMessage())) {
@@ -371,7 +381,16 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApart(String lawdCd) throws Exception {
+    public void saveApartInfo(
+            String masterCd,
+            String lawdCd
+    ) throws Exception {
+        /**
+         * 아파트 리스트 초기화
+         * 아파트명이 간혹 변경되는 경우가 존재해서 업데이트 방식을 사용할 수 없었다.
+         */
+        apartRepository.deleteByLawdCd(lawdCd);
+
         List<Apart> apartList = tradeRepository.findByLawdCd(lawdCd);
 
         for (Apart apart : apartList) {
@@ -380,6 +399,8 @@ public class FgmService {
                     .apartDong(apart.getApartDong())
                     .address(apart.getAddress())
                     .lawdCd(apart.getLawdCd())
+                    .masterCd(masterCd)
+                    .masterCd(masterCd)
                     .build());
         }
     }
@@ -426,39 +447,6 @@ public class FgmService {
         }
     }
 
-    private ResponseDTO callApartListApi(String lawdCd) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        sb.append(API_APART_LIST_URL);
-        sb.append("?serviceKey=" + SERVICE_KEY);
-        sb.append("&sigunguCode=" + lawdCd);
-        sb.append("&pageNo=1");
-        sb.append("&numOfRows=100");
-
-        URL url = new URL(sb.toString());
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestProperty("Content-Type","application/xml");
-        conn.setRequestMethod("GET");
-        conn.connect();
-
-        SAXBuilder builder = new SAXBuilder();
-        Document document = builder.build(conn.getInputStream());
-
-        Element root = document.getRootElement();
-        Element header = root.getChild("header");
-        Element body = null;
-        String message = "";
-
-        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
-            message = "OK";
-            body = root.getChild("body");
-        }
-
-        return ResponseDTO.builder()
-                .message(message)
-                .header(header)
-                .body(body).build();
-    }
-
     @Transactional
     public void saveApartCode(String lawdCd) throws Exception {
          ResponseDTO responseDTO = callApartListApi(lawdCd);
@@ -498,11 +486,13 @@ public class FgmService {
         }
     }
 
-    private ResponseDTO callApartInfoApi(String apartCode) throws Exception {
+    private ResponseDTO callApartListApi(String lawdCd) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append(API_APART_INFO_URL);
+        sb.append(API_APART_LIST_URL);
         sb.append("?serviceKey=" + SERVICE_KEY);
-        sb.append("&kaptCode=" + apartCode);
+        sb.append("&sigunguCode=" + lawdCd);
+        sb.append("&pageNo=1");
+        sb.append("&numOfRows=100");
 
         URL url = new URL(sb.toString());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -554,6 +544,37 @@ public class FgmService {
                 apartCodeRepository.save(apartEntity);
             }
         }
+    }
+
+    private ResponseDTO callApartInfoApi(String apartCode) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(API_APART_INFO_URL);
+        sb.append("?serviceKey=" + SERVICE_KEY);
+        sb.append("&kaptCode=" + apartCode);
+
+        URL url = new URL(sb.toString());
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("Content-Type","application/xml");
+        conn.setRequestMethod("GET");
+        conn.connect();
+
+        SAXBuilder builder = new SAXBuilder();
+        Document document = builder.build(conn.getInputStream());
+
+        Element root = document.getRootElement();
+        Element header = root.getChild("header");
+        Element body = null;
+        String message = "";
+
+        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
+            message = "OK";
+            body = root.getChild("body");
+        }
+
+        return ResponseDTO.builder()
+                .message(message)
+                .header(header)
+                .body(body).build();
     }
 
     @Transactional
