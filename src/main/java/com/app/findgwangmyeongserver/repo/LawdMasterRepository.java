@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LawdMasterRepository extends JpaRepository<LawdMasterEntity, String> {
+
+
 }

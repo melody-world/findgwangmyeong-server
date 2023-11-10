@@ -19,7 +19,7 @@ public class FgmController {
     private final FileService fileService;
 
     /**
-     * 광명찾자_아파트 거래내역 최신화
+     * 월별 광명찾자_아파트 거래내역 최신화
      * @param type   - 거래타입(deal : 매매, rent : 전월세)
      * @param year   - 거래년도
      * @param month  - 거래월
@@ -41,7 +41,7 @@ public class FgmController {
     }
 
     /**
-     * 광명찾자_아파트 거래내역 최신화
+     * 년도별 광명찾자_아파트 거래내역 최신화
      * @param type   - 거래타입(deal : 매매, rent : 전월세)
      * @param year   - 거래년도
      * @param lawdCd - 지역코드
@@ -146,16 +146,16 @@ public class FgmController {
 
     /**
      * 시군구 아파트 목록 조회 후 저장
-     * @param lawdCd
+     * @param masterCd
      * @return
      * @throws Exception
      */
     @PostMapping(value="/apart/code")
     public ResponseEntity<MsgEntity> saveApartCode(
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd
     ) throws Exception {
-        fgmService.saveApartCode(lawdCd);
-        fgmService.saveApartAddress(lawdCd);
+        fgmService.saveApartCode(masterCd);
+        fgmService.saveApartAddress(masterCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
@@ -213,6 +213,11 @@ public class FgmController {
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", dataList.size()));
     }
+
+
+
+
+
 
 
 

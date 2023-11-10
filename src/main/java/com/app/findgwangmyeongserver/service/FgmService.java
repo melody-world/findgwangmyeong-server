@@ -148,11 +148,8 @@ public class FgmService {
                     int currentCount = Optional.of(count).orElse(0L).intValue();
 
                     //데이터 변경이 있는 경우 저장
-                    if (totalCount != currentCount) {
-                        isSave = true;
-                    }
+                    if (totalCount != currentCount) isSave = true;
                 }
-
 
                 if (isSave) {
                     ResponseDTO response = callOpenApi(type, lawdCd, 1, totalCount, deelYmd);
@@ -161,15 +158,130 @@ public class FgmService {
                         body = response.getBody();
                         Element items = body.getChild("items");
                         List<Element> itemList = items.getChildren("item");
+                        ModelMapper modelMapper = new ModelMapper();
 
                         if ("deal".equals(type)) {
                             tradeRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
 
-                            saveTradeDeal(itemList);
+                            for (Element item : itemList) {
+                                List<Element> tradeInfoList = item.getChildren();
+                                TradeDTO tradeDTO = new TradeDTO();
+
+                                for (Element info : tradeInfoList) {
+                                    String value = nullToStr(info.getContent(0).getValue(), "").trim();
+
+                                    switch (info.getName()) {
+                                        case "년":
+                                            tradeDTO.setYear(value);
+                                            break;
+                                        case "월":
+                                            tradeDTO.setMonth(String.format("%02d", Integer.parseInt(value)));
+                                            break;
+                                        case "일":
+                                            tradeDTO.setDay(String.format("%02d", Integer.parseInt(value)));
+                                            break;
+                                        case "아파트":
+                                            tradeDTO.setApartName(value);
+                                            break;
+                                        case "전용면적":
+                                            tradeDTO.setApartArea(value);
+                                            break;
+                                        case "층":
+                                            tradeDTO.setApartFloor(Integer.parseInt(value));
+                                            break;
+                                        case "거래금액":
+                                            tradeDTO.setTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
+                                            break;
+                                        case "거래유형":
+                                            tradeDTO.setTradeType(value);
+                                            break;
+                                        case "지역코드":
+                                            tradeDTO.setLawdCd(value);
+                                            break;
+                                        case "법정동":
+                                            tradeDTO.setApartDong(value);
+                                            break;
+                                        case "도로명":
+                                            tradeDTO.setApartStreet(value);
+                                            break;
+                                        case "지번":
+                                            tradeDTO.setAddress(value);
+                                            break;
+                                        case "등기일자":
+                                            tradeDTO.setConfirmYmd(value);
+                                            break;
+                                    }
+                                }
+
+                                log.info("아파트 매매 거래자료 {}", tradeDTO);
+
+                                TradeEntity tradeEntity = modelMapper.map(tradeDTO, TradeEntity.class);
+                                tradeRepository.save(tradeEntity);
+                            }
                         } else {
                             tradeRentRepository.deleteByLawdCdAndYearAndMonth(lawdCd, year, month);
 
-                            saveTradeRent(itemList);
+                            for (Element item : itemList) {
+                                List<Element> tradeInfoList = item.getChildren();
+                                TradeDTO tradeDTO = new TradeDTO();
+
+                                for (Element info : tradeInfoList) {
+                                    String value = nullToStr(info.getContent(0).getValue(), "").trim();
+
+                                    switch (info.getName()) {
+                                        case "년":
+                                            tradeDTO.setYear(value);
+                                            break;
+                                        case "월":
+                                            tradeDTO.setMonth(String.format("%02d", Integer.parseInt(value)));
+                                            break;
+                                        case "일":
+                                            tradeDTO.setDay(String.format("%02d", Integer.parseInt(value)));
+                                            break;
+                                        case "아파트":
+                                            tradeDTO.setApartName(value);
+                                            break;
+                                        case "전용면적":
+                                            tradeDTO.setApartArea(value);
+                                            break;
+                                        case "층":
+                                            tradeDTO.setApartFloor("".equals(value) ? 0 : Integer.parseInt(value));
+                                            break;
+                                        case "보증금액":
+                                            tradeDTO.setTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
+                                            break;
+                                        case "월세금액":
+                                            tradeDTO.setRentMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
+                                            break;
+                                        case "종전계약보증금":
+                                            tradeDTO.setBfTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
+                                            break;
+                                        case "종전계약월세":
+                                            tradeDTO.setBfRentMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
+                                            break;
+                                        case "계약구분":
+                                            tradeDTO.setTradeType(value);
+                                            break;
+                                        case "계약기간":
+                                            tradeDTO.setRentDate(value);
+                                            break;
+                                        case "지역코드":
+                                            tradeDTO.setLawdCd(value);
+                                            break;
+                                        case "법정동":
+                                            tradeDTO.setApartDong(value);
+                                            break;
+                                        case "지번":
+                                            tradeDTO.setAddress(value);
+                                            break;
+                                    }
+                                }
+
+                                log.info("아파트 전/월세 거래자료 {}", tradeDTO);
+
+                                TradeRentEntity tradeRentEntity = modelMapper.map(tradeDTO, TradeRentEntity.class);
+                                tradeRentRepository.save(tradeRentEntity);
+                            }
                         }
                     }
 
@@ -179,130 +291,6 @@ public class FgmService {
         }
 
         return result;
-    }
-
-    private void saveTradeDeal(List<Element> itemList) {
-        for (Element item : itemList) {
-            List<Element> tradeInfoList = item.getChildren();
-            TradeDTO tradeDTO = new TradeDTO();
-
-            for (Element info : tradeInfoList) {
-                String value = nullToStr(info.getContent(0).getValue(), "").trim();
-
-                switch (info.getName()) {
-                    case "년":
-                        tradeDTO.setYear(value);
-                        break;
-                    case "월":
-                        tradeDTO.setMonth(String.format("%02d", Integer.parseInt(value)));
-                        break;
-                    case "일":
-                        tradeDTO.setDay(String.format("%02d", Integer.parseInt(value)));
-                        break;
-                    case "아파트":
-                        tradeDTO.setApartName(value);
-                        break;
-                    case "전용면적":
-                        tradeDTO.setApartArea(value);
-                        break;
-                    case "층":
-                        tradeDTO.setApartFloor(Integer.parseInt(value));
-                        break;
-                    case "거래금액":
-                        tradeDTO.setTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
-                        break;
-                    case "거래유형":
-                        tradeDTO.setTradeType(value);
-                        break;
-                    case "지역코드":
-                        tradeDTO.setLawdCd(value);
-                        break;
-                    case "법정동":
-                        tradeDTO.setApartDong(value);
-                        break;
-                    case "도로명":
-                        tradeDTO.setApartStreet(value);
-                        break;
-                    case "지번":
-                        tradeDTO.setAddress(value);
-                        break;
-                    case "등기일자":
-                        tradeDTO.setConfirmYmd(value);
-                        break;
-                }
-            }
-
-            log.info("아파트 매매 거래자료 {}", tradeDTO);
-            ModelMapper modelMapper = new ModelMapper();
-            TradeEntity tradeEntity = modelMapper.map(tradeDTO, TradeEntity.class);
-
-            tradeRepository.save(tradeEntity);
-        }
-    }
-
-    private void saveTradeRent(List<Element> itemList) {
-        for (Element item : itemList) {
-            List<Element> tradeInfoList = item.getChildren();
-            TradeDTO tradeDTO = new TradeDTO();
-
-            for (Element info : tradeInfoList) {
-                String value = nullToStr(info.getContent(0).getValue(), "").trim();
-
-                switch (info.getName()) {
-                    case "년":
-                        tradeDTO.setYear(value);
-                        break;
-                    case "월":
-                        tradeDTO.setMonth(String.format("%02d", Integer.parseInt(value)));
-                        break;
-                    case "일":
-                        tradeDTO.setDay(String.format("%02d", Integer.parseInt(value)));
-                        break;
-                    case "아파트":
-                        tradeDTO.setApartName(value);
-                        break;
-                    case "전용면적":
-                        tradeDTO.setApartArea(value);
-                        break;
-                    case "층":
-                        tradeDTO.setApartFloor("".equals(value) ? 0 : Integer.parseInt(value));
-                        break;
-                    case "보증금액":
-                        tradeDTO.setTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
-                        break;
-                    case "월세금액":
-                        tradeDTO.setRentMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
-                        break;
-                    case "종전계약보증금":
-                        tradeDTO.setBfTradeMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
-                        break;
-                    case "종전계약월세":
-                        tradeDTO.setBfRentMoney("".equals(value) ? 0 : Integer.parseInt(value.replaceAll(",", "")));
-                        break;
-                    case "계약구분":
-                        tradeDTO.setTradeType(value);
-                        break;
-                    case "계약기간":
-                        tradeDTO.setRentDate(value);
-                        break;
-                    case "지역코드":
-                        tradeDTO.setLawdCd(value);
-                        break;
-                    case "법정동":
-                        tradeDTO.setApartDong(value);
-                        break;
-                    case "지번":
-                        tradeDTO.setAddress(value);
-                        break;
-                }
-            }
-
-            log.info("아파트 전/월세 거래자료 {}", tradeDTO);
-            ModelMapper modelMapper = new ModelMapper();
-            TradeRentEntity tradeRentEntity = modelMapper.map(tradeDTO, TradeRentEntity.class);
-
-            tradeRentRepository.save(tradeRentEntity);
-        }
     }
 
     public String masterList() {
@@ -399,9 +387,7 @@ public class FgmService {
                     .apartDong(apart.getApartDong())
                     .address(apart.getAddress())
                     .lawdCd(apart.getLawdCd())
-                    .masterCd(masterCd)
-                    .masterCd(masterCd)
-                    .build());
+                    .masterCd(masterCd).build());
         }
     }
 
@@ -448,39 +434,44 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartCode(String lawdCd) throws Exception {
-         ResponseDTO responseDTO = callApartListApi(lawdCd);
+    public void saveApartCode(String masterCd) throws Exception {
+        List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
 
-        if ("OK".equals(responseDTO.getMessage())) {
-            Element body = responseDTO.getBody();
-            Element items = body.getChild("items");
+        for (LawdEntity lawdEntity : lawdList) {
+            String lawdCd = lawdEntity.getLawdCd();
+            ResponseDTO responseDTO = callApartListApi(lawdCd);
 
-            int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
+            if ("OK".equals(responseDTO.getMessage())) {
+                Element body = responseDTO.getBody();
+                Element items = body.getChild("items");
 
-            if (totalCount > 0) {
-                apartCodeRepository.deleteByLawdCd(lawdCd);
+                int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
-                List<Element> itemList = items.getChildren("item");
+                if (totalCount > 0) {
+                    apartCodeRepository.deleteByLawdCd(lawdCd);
 
-                for (Element item : itemList) {
-                    List<Element> tradeInfoList = item.getChildren();
-                    ApartCodeEntity apartCodeEntity = new ApartCodeEntity();
-                    apartCodeEntity.setLawdCd(lawdCd);
+                    List<Element> itemList = items.getChildren("item");
 
-                    for (Element info : tradeInfoList) {
-                        String value = nullToStr(info.getContent(0).getValue(), "").trim();
+                    for (Element item : itemList) {
+                        List<Element> tradeInfoList = item.getChildren();
+                        ApartCodeEntity apartCodeEntity = new ApartCodeEntity();
+                        apartCodeEntity.setLawdCd(lawdCd);
 
-                        switch (info.getName()) {
-                            case "kaptCode":
-                                apartCodeEntity.setApartCode(value);
-                                break;
-                            case "kaptName":
-                                apartCodeEntity.setApartName(value);
-                                break;
+                        for (Element info : tradeInfoList) {
+                            String value = nullToStr(info.getContent(0).getValue(), "").trim();
+
+                            switch (info.getName()) {
+                                case "kaptCode":
+                                    apartCodeEntity.setApartCode(value);
+                                    break;
+                                case "kaptName":
+                                    apartCodeEntity.setApartName(value);
+                                    break;
+                            }
                         }
-                    }
 
-                    apartCodeRepository.save(apartCodeEntity);
+                        apartCodeRepository.save(apartCodeEntity);
+                    }
                 }
             }
         }
@@ -520,28 +511,30 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartAddress(String lawdCd) throws Exception {
-        List<ApartCodeEntity> apartList = apartCodeRepository.findByLawdCd(lawdCd);
+    public void saveApartAddress(String masterCd) throws Exception {
+        List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
 
-        for (ApartCodeEntity apartEntity : apartList) {
-            log.info(apartEntity.toString());
+        for (LawdEntity lawdEntity : lawdList) {
+            List<ApartCodeEntity> apartList = apartCodeRepository.findByLawdCd(lawdEntity.getLawdCd());
 
-            ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
+            for (ApartCodeEntity apartEntity : apartList) {
+                ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
 
-            if ("OK".equals(responseDTO.getMessage())) {
-                Element body = responseDTO.getBody();
-                Element item = body.getChild("item");
-                List<Element> itemList = item.getChildren();
+                if ("OK".equals(responseDTO.getMessage())) {
+                    Element body = responseDTO.getBody();
+                    Element item = body.getChild("item");
+                    List<Element> itemList = item.getChildren();
 
-                for (Element element : itemList) {
-                    String value = nullToStr(element.getContent(0).getValue(), "").trim();
+                    for (Element element : itemList) {
+                        String value = nullToStr(element.getContent(0).getValue(), "").trim();
 
-                    if ("kaptAddr".equals(element.getName())) {
-                        apartEntity.setAddress(value);
+                        if ("kaptAddr".equals(element.getName())) {
+                            apartEntity.setAddress(value);
+                        }
                     }
-                }
 
-                apartCodeRepository.save(apartEntity);
+                    apartCodeRepository.save(apartEntity);
+                }
             }
         }
     }
