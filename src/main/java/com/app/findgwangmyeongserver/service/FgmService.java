@@ -2,12 +2,12 @@ package com.app.findgwangmyeongserver.service;
 
 import com.app.findgwangmyeongserver.dto.ResponseDTO;
 import com.app.findgwangmyeongserver.dto.TradeDTO;
-import com.app.findgwangmyeongserver.dto.inter.Apart;
 import com.app.findgwangmyeongserver.dto.inter.ApartCode;
 import com.app.findgwangmyeongserver.entity.*;
 import com.app.findgwangmyeongserver.repo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -18,12 +18,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -369,71 +369,6 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartInfo(
-            String masterCd,
-            String lawdCd
-    ) throws Exception {
-        /**
-         * 아파트 리스트 초기화
-         * 아파트명이 간혹 변경되는 경우가 존재해서 업데이트 방식을 사용할 수 없었다.
-         */
-        apartRepository.deleteByLawdCd(lawdCd);
-
-        List<Apart> apartList = tradeRepository.findByLawdCd(lawdCd);
-
-        for (Apart apart : apartList) {
-            apartRepository.save(ApartEntity.builder()
-                    .apartName(apart.getApartName())
-                    .apartDong(apart.getApartDong())
-                    .address(apart.getAddress())
-                    .lawdCd(apart.getLawdCd())
-                    .masterCd(masterCd).build());
-        }
-    }
-
-    @Transactional
-    public void saveApartConv(String lawdCd) throws Exception {
-        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
-        apartList = apartList.stream()
-                        .filter(a -> a.getConvX() == 0 || a.getConvY() ==0)
-                        .collect(Collectors.toList());
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-NCP-APIGW-API-KEY-ID", NAVER_GEOCODE_KEY_ID);
-        headers.set("X-NCP-APIGW-API-KEY", NAVER_GEOCODE_KEY);
-
-        HttpEntity request = new HttpEntity(headers);
-
-        for (ApartEntity apartEntity : apartList) {
-            String address = apartEntity.getApartDong() + " " + apartEntity.getAddress();
-            ResponseEntity<String> response = restTemplate.exchange(
-                    NAVER_GEOCODE_URL + "?query=" + address + "&count=1",
-                    HttpMethod.GET,
-                    request,
-                    String.class
-            );
-
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JSONParser jsonParser = new JSONParser();
-                JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
-                JSONArray jsonArray = (JSONArray) jsonObject.get("addresses");
-
-                for (Object obj : jsonArray) {
-                    JSONObject object = (JSONObject) obj;
-
-                    apartEntity.setConvX(Double.parseDouble(String.valueOf(object.get("x"))));
-                    apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
-                }
-
-                apartRepository.save(apartEntity);
-
-                log.info(apartEntity.toString());
-            }
-        }
-    }
-
-    @Transactional
     public void saveApartCode(String masterCd) throws Exception {
         List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
 
@@ -448,29 +383,34 @@ public class FgmService {
                 int totalCount = Integer.parseInt(body.getChild("totalCount").getContent(0).getValue());
 
                 if (totalCount > 0) {
-                    apartCodeRepository.deleteByLawdCd(lawdCd);
+                    int codeCount = apartCodeRepository.countByLawdCd(lawdCd);
 
-                    List<Element> itemList = items.getChildren("item");
+                    if (totalCount != codeCount) {
+                        apartCodeRepository.deleteByLawdCd(lawdCd);
 
-                    for (Element item : itemList) {
-                        List<Element> tradeInfoList = item.getChildren();
-                        ApartCodeEntity apartCodeEntity = new ApartCodeEntity();
-                        apartCodeEntity.setLawdCd(lawdCd);
+                        List<Element> itemList = items.getChildren("item");
 
-                        for (Element info : tradeInfoList) {
-                            String value = nullToStr(info.getContent(0).getValue(), "").trim();
+                        for (Element item : itemList) {
+                            List<Element> tradeInfoList = item.getChildren();
+                            ApartCodeEntity apartCodeEntity = new ApartCodeEntity();
+                            apartCodeEntity.setLawdCd(lawdCd);
 
-                            switch (info.getName()) {
-                                case "kaptCode":
-                                    apartCodeEntity.setApartCode(value);
-                                    break;
-                                case "kaptName":
-                                    apartCodeEntity.setApartName(value);
-                                    break;
+                            for (Element info : tradeInfoList) {
+                                String value = nullToStr(info.getContent(0).getValue(), "").trim();
+                                apartCodeEntity.setLawdCd(lawdCd);
+
+                                switch (info.getName()) {
+                                    case "kaptCode":
+                                        apartCodeEntity.setApartCode(value);
+                                        break;
+                                    case "kaptName":
+                                        apartCodeEntity.setApartName(value);
+                                        break;
+                                }
                             }
-                        }
 
-                        apartCodeRepository.save(apartCodeEntity);
+                            apartCodeRepository.save(apartCodeEntity);
+                        }
                     }
                 }
             }
@@ -511,30 +451,38 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartAddress(String masterCd) throws Exception {
-        List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
+    public void saveApartAddress(String masterCd, String lawdCd) throws Exception {
+        List<ApartCode> apartCodeList = apartCodeRepository.findByMasterCd(masterCd);
 
-        for (LawdEntity lawdEntity : lawdList) {
-            List<ApartCodeEntity> apartList = apartCodeRepository.findByLawdCd(lawdEntity.getLawdCd());
+        if (!"".equals(nullToStr(lawdCd, ""))) {
+            apartCodeList = apartCodeList.stream()
+                                .filter(e -> lawdCd.equals(e.getLawdCd()))
+                                .collect(Collectors.toList());
+        }
 
-            for (ApartCodeEntity apartEntity : apartList) {
-                ResponseDTO responseDTO = callApartInfoApi(apartEntity.getApartCode());
+        for (ApartCode code : apartCodeList) {
+            ResponseDTO responseDTO = callApartInfoApi(code.getApartCode());
 
-                if ("OK".equals(responseDTO.getMessage())) {
-                    Element body = responseDTO.getBody();
-                    Element item = body.getChild("item");
-                    List<Element> itemList = item.getChildren();
+            if ("OK".equals(responseDTO.getMessage())) {
+                Element body = responseDTO.getBody();
+                Element item = body.getChild("item");
+                List<Element> itemList = item.getChildren();
+                ApartCodeEntity apartEntity = apartCodeRepository.findByApartCode(code.getApartCode());
 
-                    for (Element element : itemList) {
-                        String value = nullToStr(element.getContent(0).getValue(), "").trim();
+                for (Element element : itemList) {
+                    String value = nullToStr(element.getContent(0).getValue(), "").trim();
 
-                        if ("kaptAddr".equals(element.getName())) {
+                    switch (element.getName()) {
+                        case "kaptAddr":
                             apartEntity.setAddress(value);
-                        }
+                            break;
+                        case "doroJuso":
+                            apartEntity.setDoroJuso(value);
+                            break;
                     }
-
-                    apartCodeRepository.save(apartEntity);
                 }
+
+                apartCodeRepository.save(apartEntity);
             }
         }
     }
@@ -559,7 +507,7 @@ public class FgmService {
         Element body = null;
         String message = "";
 
-        if (header.getContent(0) != null && "00".equals(header.getContent(0).getValue())) {
+        if (header.getContent(0) != null) {
             message = "OK";
             body = root.getChild("body");
         }
@@ -571,53 +519,100 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartCompare1(String lawdCd) throws Exception {
-        /**
-         * 아파트 리스트와 거래 내역의 아파트들을 그룹화해 주소를 대조한다.
-         */
-        List<ApartCode> apartList = tradeRepository.findByLawdCd2(lawdCd);
+    public void saveApartZipCode(List<ApartCodeEntity> apartCodeList) throws Exception {
+        if (CollectionUtils.isNotEmpty(apartCodeList)) {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-NCP-APIGW-API-KEY-ID", NAVER_GEOCODE_KEY_ID);
+            headers.set("X-NCP-APIGW-API-KEY", NAVER_GEOCODE_KEY);
 
-        for (ApartCode apartCode : apartList) {
-            ApartEntity apartEntity = apartRepository.findBySeq(apartCode.getSeq());
-            apartEntity.setApartCode(apartCode.getApartCode());
+            HttpEntity request = new HttpEntity(headers);
 
-            apartRepository.save(apartEntity);
+            for (ApartCodeEntity apartEntity : apartCodeList) {
+                String address = "".equals(nullToStr(apartEntity.getDoroJuso(), "")) ?
+                                    apartEntity.getAddress() :
+                                    apartEntity.getDoroJuso();
+
+                ResponseEntity<String> response = restTemplate.exchange(
+                        NAVER_GEOCODE_URL + "?query=" + address + "&count=1",
+                        HttpMethod.GET,
+                        request,
+                        String.class
+                );
+
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    JSONParser jsonParser = new JSONParser();
+                    JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
+                    JSONArray jsonArray   = (JSONArray) jsonObject.get("addresses");
+
+                    for (Object obj : jsonArray) {
+                        JSONObject object = (JSONObject) obj;
+                        JSONArray addressElements = (JSONArray) object.get("addressElements");
+
+                        for (Object addressElement : addressElements) {
+                            JSONObject element = (JSONObject) addressElement;
+                            JSONArray types = (JSONArray) element.get("types");
+
+                            for (Object type : types) {
+                                String typeName = String.valueOf(type);
+
+                                if ("DONGMYUN".equals(typeName)) {
+                                    apartEntity.setDongmyun(String.valueOf(element.get("longName")));
+                                }
+
+                                if ("LAND_NUMBER".equals(typeName)) {
+                                    apartEntity.setLandNumber(String.valueOf(element.get("longName")));
+                                }
+
+                                if ("POSTAL_CODE".equals(typeName)) {
+                                    apartEntity.setZipCode(String.valueOf(element.get("longName")));
+                                }
+                            }
+                        }
+
+                        apartEntity.setAddress(String.valueOf(object.get("jibunAddress")));
+                        apartEntity.setConvX(Double.parseDouble(String.valueOf(object.get("x"))));
+                        apartEntity.setConvY(Double.parseDouble(String.valueOf(object.get("y"))));
+                    }
+
+                    apartCodeRepository.save(apartEntity);
+                }
+            }
         }
     }
 
-    @Transactional
-    public void saveApartCompare2(String lawdCd) throws Exception {
-        /**
-         * 주소를 포함한 아파트를 조회했을 때 아파트코드가 없는 경우
-         * 아파트명으로 다시 비교해본다
-         */
-        List<ApartCode> apartList2 = tradeRepository.findByLawdCd3(lawdCd);
+    public List<ApartCodeEntity> getApartCodeList(String masterCd, String lawdCd) {
+        List<ApartCodeEntity> apartCodeList = new ArrayList<>();
+        List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
 
-        for (ApartCode apartCode : apartList2) {
-            ApartEntity apartEntity = apartRepository.findBySeq(apartCode.getSeq());
-            apartEntity.setApartCode(apartCode.getApartCode());
-
-            apartRepository.save(apartEntity);
+        for (LawdEntity lawdEntity : lawdList) {
+            if (!"".equals(nullToStr(lawdCd, "")) && lawdCd.equals(lawdEntity.getLawdCd())) {
+                apartCodeList.addAll(apartCodeRepository.findByLawdCd(lawdEntity.getLawdCd()));
+            }
         }
+
+        return apartCodeList;
     }
 
-    public String getApartList(String lawdCd) {
-        List<ApartEntity> apartList = apartRepository.findByLawdCd(lawdCd);
+     public String getApartFileList(String lawdCd) {
+        List<ApartCodeEntity> apartList = apartCodeRepository.findByLawdCd(lawdCd);
 
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
 
-        for (ApartEntity apartEntity : apartList) {
+        for (ApartCodeEntity apartEntity : apartList) {
             JSONObject obj = new JSONObject();
 
-            obj.put("seq"         , apartEntity.getSeq());
+            obj.put("apartCode"   , apartEntity.getApartCode());
             obj.put("apartName"   , apartEntity.getApartName());
-            obj.put("apartDong"   , apartEntity.getApartDong());
             obj.put("address"     , apartEntity.getAddress());
+            obj.put("doroJuso"    , apartEntity.getDoroJuso());
+            obj.put("dongmyun"    , apartEntity.getDongmyun());
+            obj.put("landNumber"  , apartEntity.getLandNumber());
+            obj.put("zipCode"     , apartEntity.getZipCode());
             obj.put("convX"       , apartEntity.getConvX());
             obj.put("convY"       , apartEntity.getConvY());
             obj.put("lawdCd"      , apartEntity.getLawdCd());
-            obj.put("apartCode"   , apartEntity.getApartCode());
 
             jsonArray.add(obj);
         }

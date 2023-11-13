@@ -1,5 +1,6 @@
 package com.app.findgwangmyeongserver.controller;
 
+import com.app.findgwangmyeongserver.entity.ApartCodeEntity;
 import com.app.findgwangmyeongserver.entity.MsgEntity;
 import com.app.findgwangmyeongserver.service.FgmService;
 import com.app.findgwangmyeongserver.service.FileService;
@@ -127,24 +128,6 @@ public class FgmController {
     }
 
     /**
-     * 거래 내역을 조회해 아파트 리스트 정리
-     * @param lawdCd
-     * @return
-     * @throws Exception
-     */
-    @PostMapping(value="/apart/info")
-    public ResponseEntity<MsgEntity> saveApartInfo(
-            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
-    ) throws Exception {
-        fgmService.saveApartInfo(masterCd, lawdCd);
-        fgmService.saveApartConv(lawdCd);
-
-        return ResponseEntity.ok()
-                .body(new MsgEntity("OK", ""));
-    }
-
-    /**
      * 시군구 아파트 목록 조회 후 저장
      * @param masterCd
      * @return
@@ -155,24 +138,41 @@ public class FgmController {
             @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd
     ) throws Exception {
         fgmService.saveApartCode(masterCd);
-        fgmService.saveApartAddress(masterCd);
+
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
+    }
+
+     /**
+     * 아파트 주소,도로명 저장
+     * @param masterCd
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value="/apart/code/address")
+    public ResponseEntity<MsgEntity> saveApartCodeAddress(
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
+            @RequestParam(value = "lawdCd", required = false) String lawdCd
+    ) throws Exception {
+        fgmService.saveApartAddress(masterCd, lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
     }
 
     /**
-     * 데이터 비교 - 거래 내역 아파트 리스트 : 아파트 목록
-     * @param lawdCd
+     * 아파트 우편번호 저장
+     * @param masterCd
      * @return
      * @throws Exception
      */
-    @PostMapping(value="/apart/compare")
-    public ResponseEntity<MsgEntity> saveApartCompare(
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
+    @PostMapping(value="/apart/code/zipcode")
+    public ResponseEntity<MsgEntity> saveApartCodeZipCode(
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
+            @RequestParam(value = "lawdCd", required = false) String lawdCd
     ) throws Exception {
-        fgmService.saveApartCompare1(lawdCd);
-        fgmService.saveApartCompare2(lawdCd);
+        List<ApartCodeEntity> apartCodeList = fgmService.getApartCodeList(masterCd, lawdCd);
+        fgmService.saveApartZipCode(apartCodeList);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
@@ -184,13 +184,13 @@ public class FgmController {
      * @return
      */
     @GetMapping(value="/apart/{path}/file")
-    public ResponseEntity<Resource> getApartListFile(
+    public ResponseEntity<Resource> getApartFileList(
             @PathVariable("path") String path,
             @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
             @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
     ) {
         String fileName = "apart.json";
-        String lawdInfo = fgmService.getApartList(lawdCd);
+        String lawdInfo = fgmService.getApartFileList(lawdCd);
 
         return fileService.getDataFile(path, masterCd + "/" + lawdCd, fileName, lawdInfo);
     }
@@ -213,9 +213,6 @@ public class FgmController {
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", dataList.size()));
     }
-
-
-
 
 
 

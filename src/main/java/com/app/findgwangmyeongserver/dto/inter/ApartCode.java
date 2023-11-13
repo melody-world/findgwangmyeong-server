@@ -2,6 +2,14 @@ package com.app.findgwangmyeongserver.dto.inter;
 
 public interface ApartCode {
 
-    int getSeq();
     String getApartCode();
+    String getAddress();
+    String getDoroJuso();
+    String getDongmyun();
+    String getLandNumber();
+    String getZipCode();
+    String getConvX();
+    String getConvY();
+
+    String getLawdCd();
 }
