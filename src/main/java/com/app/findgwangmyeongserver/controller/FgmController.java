@@ -9,7 +9,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("trade")
@@ -171,8 +173,7 @@ public class FgmController {
             @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
             @RequestParam(value = "lawdCd", required = false) String lawdCd
     ) throws Exception {
-        List<ApartCodeEntity> apartCodeList = fgmService.getApartCodeList(masterCd, lawdCd);
-        fgmService.saveApartZipCode(apartCodeList);
+        fgmService.saveApartZipCode(masterCd, lawdCd);
 
         return ResponseEntity.ok()
                 .body(new MsgEntity("OK", ""));
@@ -180,34 +181,32 @@ public class FgmController {
 
     /**
      * 아파트 단지 파일 저장
-     * @param path
+     * @param masterCd - 시군구코드
      * @return
+     * @throws Exception
      */
-    @GetMapping(value="/apart/{path}/file")
-    public ResponseEntity<Resource> getApartFileList(
-            @PathVariable("path") String path,
-            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd,
-            @RequestParam(value = "lawdCd", defaultValue = "41210") String lawdCd
-    ) {
-        String fileName = "apart.json";
-        String lawdInfo = fgmService.getApartFileList(lawdCd);
+    @GetMapping(value="/apart/code/file")
+    public ResponseEntity<MsgEntity> getApartCodeList(
+            @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd
+    ) throws Exception {
+        List<Map<String, Object>> fileList = fgmService.getApartCodeList(masterCd);
+        fileService.makeDataFile(masterCd, fileList);
 
-        return fileService.getDataFile(path, masterCd + "/" + lawdCd, fileName, lawdInfo);
+        return ResponseEntity.ok()
+                .body(new MsgEntity("OK", ""));
     }
 
     /**
      * 해당 시/군/구 디렉토리의 아파트 json 파일을 읽어 APART_LIST 데이터 업로드
-     * @param path     - fgm
      * @param masterCd - 시/군/구코드
      * @return
      * @throws Exception
      */
-    @GetMapping(value="/apart/{path}/upload")
+    @GetMapping(value="/apart/code/upload")
     public ResponseEntity<MsgEntity> uploadApartList(
-            @PathVariable("path") String path,
             @RequestParam(value = "masterCd", defaultValue = "41000") String masterCd
     ) throws Exception {
-        List<String> dataList = fileService.getApartFileFromJson(path, masterCd);
+        List<String> dataList = fileService.getApartFileFromJson(masterCd);
         fgmService.saveApartList(masterCd, dataList);
 
         return ResponseEntity.ok()

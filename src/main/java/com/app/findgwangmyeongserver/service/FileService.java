@@ -69,18 +69,15 @@ public class FileService {
     }
 
     public void makeDataFile(
-            String lawdCd,
-            String type,
+            String masterCd,
             List<Map<String, Object>> fileList
     ) throws IOException {
-        String uploadPath = UPLOAD_FILE_DIR + "/" + lawdCd + "/" + type;
-
         if (CollectionUtils.isNotEmpty(fileList)) {
             for (Map<String, Object> file : fileList) {
-                String fileName = (String) file.get("fileName");
+                String lawdCd = (String) file.get("lawdCd");
                 String fileInfo = (String) file.get("tradeInfo");
-
-                String uploadFile = uploadPath + "/" + fileName;
+                String uploadPath = UPLOAD_FILE_DIR + "/fgm/" + masterCd + "/" + lawdCd;
+                String uploadFile = uploadPath + "/apart-code.json";
 
                 checkDirectory(uploadPath);
 
@@ -103,19 +100,16 @@ public class FileService {
         }
     }
 
-    public List<String> getApartFileFromJson(
-            String filePath,
-            String masterCd
-    ) throws Exception {
+    public List<String> getApartFileFromJson(String masterCd) throws Exception {
         List<String> resultList = new ArrayList<>();
-        File dir = new File(UPLOAD_FILE_DIR + "/" + filePath + "/" + masterCd);
+        File dir = new File(UPLOAD_FILE_DIR + "/fgm/" + masterCd);
 		File[] files = dir.listFiles();
 
         if (files != null && files.length > 0) {
             JSONParser parser = new JSONParser();
 
             for (File file : files) {
-                Reader reader = new FileReader(file.toString() + "/apart.json");
+                Reader reader = new FileReader(file.toString() + "/apart-code.json");
                 JSONObject jsonObject = (JSONObject) parser.parse(reader);
 
                 String data = jsonObject.get("data").toString();

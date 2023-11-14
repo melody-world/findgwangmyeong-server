@@ -3,6 +3,7 @@ package com.app.findgwangmyeongserver.dto.inter;
 public interface ApartCode {
 
     String getApartCode();
+    String getApartName();
     String getAddress();
     String getDoroJuso();
     String getDongmyun();

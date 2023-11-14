@@ -23,9 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -519,7 +517,15 @@ public class FgmService {
     }
 
     @Transactional
-    public void saveApartZipCode(List<ApartCodeEntity> apartCodeList) throws Exception {
+    public void saveApartZipCode(String masterCd, String lawdCd) throws Exception {
+        List<ApartCode> apartCodeList = apartCodeRepository.findByMasterCd(masterCd);
+
+        if (!"".equals(nullToStr(lawdCd, ""))) {
+            apartCodeList = apartCodeList.stream()
+                                .filter(e -> lawdCd.equals(e.getLawdCd()))
+                                .collect(Collectors.toList());
+        }
+
         if (CollectionUtils.isNotEmpty(apartCodeList)) {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -528,10 +534,10 @@ public class FgmService {
 
             HttpEntity request = new HttpEntity(headers);
 
-            for (ApartCodeEntity apartEntity : apartCodeList) {
-                String address = "".equals(nullToStr(apartEntity.getDoroJuso(), "")) ?
-                                    apartEntity.getAddress() :
-                                    apartEntity.getDoroJuso();
+            for (ApartCode code : apartCodeList) {
+                String address = "".equals(nullToStr(code.getDoroJuso(), "")) ?
+                                    code.getAddress() :
+                                    code.getDoroJuso();
 
                 ResponseEntity<String> response = restTemplate.exchange(
                         NAVER_GEOCODE_URL + "?query=" + address + "&count=1",
@@ -544,6 +550,7 @@ public class FgmService {
                     JSONParser jsonParser = new JSONParser();
                     JSONObject jsonObject = (JSONObject) jsonParser.parse(response.getBody());
                     JSONArray jsonArray   = (JSONArray) jsonObject.get("addresses");
+                    ApartCodeEntity apartEntity = apartCodeRepository.findByApartCode(code.getApartCode());
 
                     for (Object obj : jsonArray) {
                         JSONObject object = (JSONObject) obj;
@@ -581,14 +588,18 @@ public class FgmService {
         }
     }
 
-    public List<ApartCodeEntity> getApartCodeList(String masterCd, String lawdCd) {
-        List<ApartCodeEntity> apartCodeList = new ArrayList<>();
+    public List<Map<String, Object>> getApartCodeList(String masterCd) {
+        List<Map<String, Object>> apartCodeList = new ArrayList<>();
         List<LawdEntity> lawdList = lawdRepository.findByMasterCd(masterCd);
 
         for (LawdEntity lawdEntity : lawdList) {
-            if (!"".equals(nullToStr(lawdCd, "")) && lawdCd.equals(lawdEntity.getLawdCd())) {
-                apartCodeList.addAll(apartCodeRepository.findByLawdCd(lawdEntity.getLawdCd()));
-            }
+            Map<String, Object> codeMap =  new HashMap<>();
+            String lawdCd = lawdEntity.getLawdCd();
+
+            codeMap.put("lawdCd"   , lawdCd);
+            codeMap.put("tradeInfo", getApartFileList(lawdCd));
+
+            apartCodeList.add(codeMap);
         }
 
         return apartCodeList;
@@ -629,26 +640,27 @@ public class FgmService {
     ) throws Exception {
         JSONParser jsonParser = new JSONParser();
 
-        if (!CollectionUtils.isEmpty(dataList)) {
-            apartRepository.deleteByMasterCd(masterCd);
+        if (CollectionUtils.isNotEmpty(dataList)) {
+            apartCodeRepository.deleteByMasterCd(masterCd);
 
             for (String data : dataList) {
                 JSONArray jsonArray = (JSONArray) jsonParser.parse(data);
 
                 for (Object obj : jsonArray) {
                     JSONObject jsonData = (JSONObject) obj;
-                    ApartEntity apartEntity = ApartEntity.builder()
-                            .seq(Integer.parseInt((String) jsonData.get("seq")))
+                    ApartCodeEntity apartCodeEntity = ApartCodeEntity.builder()
+                            .apartCode(String.valueOf(jsonData.get("apartCode")))
                             .apartName(String.valueOf(jsonData.get("apartName")))
-                            .apartDong(String.valueOf(jsonData.get("apartDong")))
                             .address(String.valueOf(jsonData.get("address")))
+                            .doroJuso(String.valueOf(jsonData.get("doroJuso")))
+                            .dongmyun(String.valueOf(jsonData.get("dongmyun")))
+                            .landNumber(String.valueOf(jsonData.get("landNumber")))
+                            .zipCode(String.valueOf(jsonData.get("zipCode")))
                             .convX(Double.parseDouble(String.valueOf(jsonData.get("convX"))))
                             .convY(Double.parseDouble(String.valueOf(jsonData.get("convY"))))
-                            .lawdCd(String.valueOf(jsonData.get("lawdCd")))
-                            .apartCode(jsonData.get("apartCode") == null ? "" : String.valueOf(jsonData.get("apartCode")))
-                            .masterCd(masterCd).build();
+                            .lawdCd(String.valueOf(jsonData.get("lawdCd"))).build();
 
-                    apartRepository.save(apartEntity);
+                    apartCodeRepository.save(apartCodeEntity);
                 }
             }
         }
