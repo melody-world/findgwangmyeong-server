@@ -132,6 +132,13 @@ public class FgmController {
                 .body(new MsgEntity("OK", dataList.size()));
     }
 
+    @GetMapping(value="/bible/file")
+    public ResponseEntity<Resource> getBibleFile() {
+        String fileName = "bible.json";
+        String bibleList = fgmService.getBibleList();
+
+        return fileService.getDataFile("bible", "", fileName, bibleList);
+    }
 
 
 

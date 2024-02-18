@@ -61,6 +61,7 @@ public class FgmService {
     private final GeomColorRepository geomColorRepository;
     private final LawdMasterRepository lawdMasterRepository;
     private final LawdRepository lawdRepository;
+    private final BibleRepository bibleRepository;
 
     private static String nullToStr(Object str, String strDefault) {
         if (str == null || str == "null" || "null".equals(str.toString()) || "undefined".equals(str.toString()) || str.toString().length() == 0) {
@@ -445,6 +446,27 @@ public class FgmService {
                 }
             }
         }
+    }
+
+    public String getBibleList() {
+        List<BibleEntity> bibleList = bibleRepository.findAll();
+        JSONObject lawdObj  = new JSONObject();
+        JSONArray lawdArray = new JSONArray();
+
+        for (BibleEntity bibleEntity : bibleList) {
+            JSONObject obj = new JSONObject();
+
+            obj.put("book"  , bibleEntity.getBook());
+            obj.put("chapter"  , bibleEntity.getChapter());
+            obj.put("verse", bibleEntity.getVerse());
+            obj.put("content", bibleEntity.getContent());
+
+            lawdArray.add(obj);
+        }
+
+        lawdObj.put("data", lawdArray);
+
+        return lawdObj.toString();
     }
 
 }
